@@ -33,33 +33,59 @@ public class ContentDiscoveryTests
             _client,
             _ns,
             _data.Configs[2].Content,
-            _data.Configs[2].Digest
+            _data.Configs[2].Digest,
+            TestContext.Current.CancellationToken
         );
         await TestData.PushBlobAsync(
             _client,
             _ns,
             _data.Configs[4].Content,
-            _data.Configs[4].Digest
+            _data.Configs[4].Digest,
+            TestContext.Current.CancellationToken
         );
     }
 
     [Fact]
     public async Task A02_Setup_PushLayerBlob()
     {
-        await TestData.PushBlobAsync(_client, _ns, _data.LayerBlobData, _data.LayerBlobDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.LayerBlobData,
+            _data.LayerBlobDigest,
+            TestContext.Current.CancellationToken
+        );
     }
 
     [Fact]
     public async Task A03_Setup_PushEmptyJsonBlob()
     {
-        await TestData.PushBlobAsync(_client, _ns, _data.EmptyJsonBlob, _data.EmptyJsonBlobDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.EmptyJsonBlob,
+            _data.EmptyJsonBlobDigest,
+            TestContext.Current.CancellationToken
+        );
     }
 
     [Fact]
     public async Task A04_Setup_PushRefBlobs()
     {
-        await TestData.PushBlobAsync(_client, _ns, _data.TestRefBlobA, _data.TestRefBlobADigest);
-        await TestData.PushBlobAsync(_client, _ns, _data.TestRefBlobB, _data.TestRefBlobBDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.TestRefBlobA,
+            _data.TestRefBlobADigest,
+            TestContext.Current.CancellationToken
+        );
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.TestRefBlobB,
+            _data.TestRefBlobBDigest,
+            TestContext.Current.CancellationToken
+        );
     }
 
     [Fact]
@@ -73,7 +99,8 @@ public class ContentDiscoveryTests
                 _ns,
                 tag,
                 _data.Manifests[2].Content,
-                ManifestMediaType
+                ManifestMediaType,
+                TestContext.Current.CancellationToken
             );
             Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         }
@@ -87,7 +114,8 @@ public class ContentDiscoveryTests
             _ns,
             "tagtest0",
             _data.Manifests[4].Content,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
@@ -100,7 +128,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsManifestAConfigArtifactDigest,
             _data.RefsManifestAConfigArtifactContent,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
@@ -118,7 +147,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsManifestALayerArtifactDigest,
             _data.RefsManifestALayerArtifactContent,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
@@ -136,7 +166,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsIndexArtifactDigest,
             _data.RefsIndexArtifactContent,
-            IndexMediaType
+            IndexMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
@@ -154,7 +185,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsManifestBConfigArtifactDigest,
             _data.RefsManifestBConfigArtifactContent,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
@@ -167,7 +199,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsManifestBLayerArtifactDigest,
             _data.RefsManifestBLayerArtifactContent,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
@@ -181,7 +214,8 @@ public class ContentDiscoveryTests
             _ns,
             _data.RefsManifestCLayerArtifactDigest,
             _data.RefsManifestCLayerArtifactContent,
-            ManifestMediaType
+            ManifestMediaType,
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
@@ -191,10 +225,13 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task B1_ListTags_Returns200InSortedOrder()
     {
-        var resp = await _client.GetAsync($"/v2/{_ns}/tags/list");
+        var resp = await _client.GetAsync(
+            $"/v2/{_ns}/tags/list",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var tags = doc
             .RootElement.GetProperty("tags")
@@ -217,10 +254,13 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task B2_ListTags_WithN_LimitsResults()
     {
-        var resp = await _client.GetAsync($"/v2/{_ns}/tags/list?n=4");
+        var resp = await _client.GetAsync(
+            $"/v2/{_ns}/tags/list?n=4",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var tags = doc
             .RootElement.GetProperty("tags")
@@ -235,10 +275,13 @@ public class ContentDiscoveryTests
     public async Task B3_ListTags_WithNAndLast_PaginatesCorrectly()
     {
         // First page
-        var resp1 = await _client.GetAsync($"/v2/{_ns}/tags/list?n=4");
+        var resp1 = await _client.GetAsync(
+            $"/v2/{_ns}/tags/list?n=4",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp1.StatusCode);
 
-        var body1 = await resp1.Content.ReadAsStringAsync();
+        var body1 = await resp1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc1 = JsonDocument.Parse(body1);
         var page1Tags = doc1
             .RootElement.GetProperty("tags")
@@ -251,11 +294,12 @@ public class ContentDiscoveryTests
 
         // Second page
         var resp2 = await _client.GetAsync(
-            $"/v2/{_ns}/tags/list?n=4&last={Uri.EscapeDataString(lastTag)}"
+            $"/v2/{_ns}/tags/list?n=4&last={Uri.EscapeDataString(lastTag)}",
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.OK, resp2.StatusCode);
 
-        var body2 = await resp2.Content.ReadAsStringAsync();
+        var body2 = await resp2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc2 = JsonDocument.Parse(body2);
         var page2Tags = doc2
             .RootElement.GetProperty("tags")
@@ -273,13 +317,16 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task C1_ReferrersForNonexistentDigest_Returns200EmptyIndex()
     {
-        var resp = await _client.GetAsync($"/v2/{_ns}/referrers/{_data.DummyDigest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_ns}/referrers/{_data.DummyDigest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
         var contentType = resp.Content.Headers.ContentType?.MediaType;
         Assert.Equal(IndexMediaType, contentType);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var manifests = doc.RootElement.GetProperty("manifests");
         Assert.Equal(0, manifests.GetArrayLength());
@@ -288,13 +335,16 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task C2_ReferrersForExistingManifest_Returns200WithDescriptors()
     {
-        var resp = await _client.GetAsync($"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
         var contentType = resp.Content.Headers.ContentType?.MediaType;
         Assert.Equal(IndexMediaType, contentType);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var manifests = doc.RootElement.GetProperty("manifests");
         Assert.Equal(5, manifests.GetArrayLength());
@@ -313,11 +363,12 @@ public class ContentDiscoveryTests
     public async Task C3_ReferrersWithArtifactTypeFilter_ReturnsFilteredResults()
     {
         var resp = await _client.GetAsync(
-            $"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}?artifactType={Uri.EscapeDataString(_data.TestRefArtifactTypeA)}"
+            $"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}?artifactType={Uri.EscapeDataString(_data.TestRefArtifactTypeA)}",
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var manifests = doc.RootElement.GetProperty("manifests");
 
@@ -337,10 +388,13 @@ public class ContentDiscoveryTests
     public async Task C4_ReferrersForNonExistentSubject_Returns200WithOneReferrer()
     {
         // manifests[3] was never pushed, but RefsManifestCLayerArtifact references it as subject
-        var resp = await _client.GetAsync($"/v2/{_ns}/referrers/{_data.Manifests[3].Digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_ns}/referrers/{_data.Manifests[3].Digest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var manifests = doc.RootElement.GetProperty("manifests");
         Assert.Equal(1, manifests.GetArrayLength());

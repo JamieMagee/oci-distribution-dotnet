@@ -36,11 +36,18 @@ public class ContentManagementTests
             _client,
             name,
             _data.Configs[3].Content,
-            _data.Configs[3].Digest
+            _data.Configs[3].Digest,
+            TestContext.Current.CancellationToken
         );
 
         // Push layer blob
-        await TestData.PushBlobAsync(_client, name, _data.LayerBlobData, _data.LayerBlobDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            name,
+            _data.LayerBlobData,
+            _data.LayerBlobDigest,
+            TestContext.Current.CancellationToken
+        );
 
         // Push manifest with tag
         var resp = await TestData.PushManifestAsync(
@@ -48,15 +55,19 @@ public class ContentManagementTests
             name,
             "tagtest0",
             _data.Manifests[3].Content,
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json",
+            TestContext.Current.CancellationToken
         );
         resp.EnsureSuccessStatusCode();
 
         // Record initial tag count
-        var tagsResp = await _client.GetAsync($"/v2/{name}/tags/list");
+        var tagsResp = await _client.GetAsync(
+            $"/v2/{name}/tags/list",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, tagsResp.StatusCode);
 
-        var body = await tagsResp.Content.ReadAsStringAsync();
+        var body = await tagsResp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var tags = doc.RootElement.GetProperty("tags");
         _fixture.State["mgmt_initialTagCount"] = tags.GetArrayLength().ToString();
@@ -69,7 +80,10 @@ public class ContentManagementTests
     public async Task B1_DeleteManifestByTag_Returns202Or400Or405()
     {
         var name = RegistryFixture.Namespace;
-        var resp = await _client.DeleteAsync($"/v2/{name}/manifests/tagtest0");
+        var resp = await _client.DeleteAsync(
+            $"/v2/{name}/manifests/tagtest0",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Contains(
             resp.StatusCode,
@@ -88,7 +102,10 @@ public class ContentManagementTests
     {
         var name = RegistryFixture.Namespace;
         var digest = _data.Manifests[3].Digest;
-        var resp = await _client.DeleteAsync($"/v2/{name}/manifests/{digest}");
+        var resp = await _client.DeleteAsync(
+            $"/v2/{name}/manifests/{digest}",
+            TestContext.Current.CancellationToken
+        );
 
         // 202 if deleted, 404 if already removed by tag delete
         Assert.Contains(
@@ -112,7 +129,10 @@ public class ContentManagementTests
     {
         var name = RegistryFixture.Namespace;
         var digest = _data.Manifests[3].Digest;
-        var resp = await _client.GetAsync($"/v2/{name}/manifests/{digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{name}/manifests/{digest}",
+            TestContext.Current.CancellationToken
+        );
 
         if (_fixture.State.GetValueOrDefault("mgmt_manifestDeleteAllowed") != "false")
         {
@@ -129,10 +149,13 @@ public class ContentManagementTests
     public async Task B4_TagListReflectsDeletion()
     {
         var name = RegistryFixture.Namespace;
-        var resp = await _client.GetAsync($"/v2/{name}/tags/list");
+        var resp = await _client.GetAsync(
+            $"/v2/{name}/tags/list",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
-        var body = await resp.Content.ReadAsStringAsync();
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(body);
         var tags = doc.RootElement.GetProperty("tags");
         var currentCount = tags.GetArrayLength();
@@ -159,7 +182,10 @@ public class ContentManagementTests
         var name = RegistryFixture.Namespace;
 
         // Delete config blob
-        var configResp = await _client.DeleteAsync($"/v2/{name}/blobs/{_data.Configs[3].Digest}");
+        var configResp = await _client.DeleteAsync(
+            $"/v2/{name}/blobs/{_data.Configs[3].Digest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Contains(
             configResp.StatusCode,
             new[]
@@ -176,7 +202,10 @@ public class ContentManagementTests
         }
 
         // Delete layer blob
-        var layerResp = await _client.DeleteAsync($"/v2/{name}/blobs/{_data.LayerBlobDigest}");
+        var layerResp = await _client.DeleteAsync(
+            $"/v2/{name}/blobs/{_data.LayerBlobDigest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Contains(
             layerResp.StatusCode,
             new[]
@@ -192,7 +221,10 @@ public class ContentManagementTests
     public async Task C2_GetDeletedBlob_Returns404()
     {
         var name = RegistryFixture.Namespace;
-        var resp = await _client.GetAsync($"/v2/{name}/blobs/{_data.Configs[3].Digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{name}/blobs/{_data.Configs[3].Digest}",
+            TestContext.Current.CancellationToken
+        );
 
         if (_fixture.State.GetValueOrDefault("mgmt_blobDeleteAllowed") != "false")
         {

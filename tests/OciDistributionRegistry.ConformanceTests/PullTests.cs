@@ -22,11 +22,29 @@ public class PullTests
     public async Task A0_Setup_PushContentForPullTests()
     {
         // Push config blobs
-        await TestData.PushBlobAsync(Client, Ns, Data.Configs[0].Content, Data.Configs[0].Digest);
-        await TestData.PushBlobAsync(Client, Ns, Data.Configs[1].Content, Data.Configs[1].Digest);
+        await TestData.PushBlobAsync(
+            Client,
+            Ns,
+            Data.Configs[0].Content,
+            Data.Configs[0].Digest,
+            TestContext.Current.CancellationToken
+        );
+        await TestData.PushBlobAsync(
+            Client,
+            Ns,
+            Data.Configs[1].Content,
+            Data.Configs[1].Digest,
+            TestContext.Current.CancellationToken
+        );
 
         // Push layer blob
-        await TestData.PushBlobAsync(Client, Ns, Data.LayerBlobData, Data.LayerBlobDigest);
+        await TestData.PushBlobAsync(
+            Client,
+            Ns,
+            Data.LayerBlobData,
+            Data.LayerBlobDigest,
+            TestContext.Current.CancellationToken
+        );
 
         // Push manifest[0] with tag
         var resp0 = await TestData.PushManifestAsync(
@@ -34,7 +52,8 @@ public class PullTests
             Ns,
             "tagtest0",
             Data.Manifests[0].Content,
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json",
+            TestContext.Current.CancellationToken
         );
         resp0.EnsureSuccessStatusCode();
 
@@ -44,7 +63,8 @@ public class PullTests
             Ns,
             Data.Manifests[1].Digest,
             Data.Manifests[1].Content,
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json",
+            TestContext.Current.CancellationToken
         );
         resp1.EnsureSuccessStatusCode();
     }
@@ -55,7 +75,7 @@ public class PullTests
     public async Task B0_HeadNonexistentBlob_Returns404()
     {
         var request = new HttpRequestMessage(HttpMethod.Head, $"/v2/{Ns}/blobs/{Data.DummyDigest}");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -66,7 +86,7 @@ public class PullTests
             HttpMethod.Head,
             $"/v2/{Ns}/blobs/{Data.Configs[0].Digest}"
         );
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var dcd = response.Headers.GetValues("Docker-Content-Digest").FirstOrDefault();
@@ -76,14 +96,20 @@ public class PullTests
     [Fact]
     public async Task B2_GetNonexistentBlob_Returns404()
     {
-        var response = await Client.GetAsync($"/v2/{Ns}/blobs/{Data.DummyDigest}");
+        var response = await Client.GetAsync(
+            $"/v2/{Ns}/blobs/{Data.DummyDigest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task B3_GetExistingBlob_Returns200()
     {
-        var response = await Client.GetAsync($"/v2/{Ns}/blobs/{Data.Configs[0].Digest}");
+        var response = await Client.GetAsync(
+            $"/v2/{Ns}/blobs/{Data.Configs[0].Digest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -96,7 +122,7 @@ public class PullTests
             HttpMethod.Head,
             $"/v2/{Ns}/manifests/{Data.NonexistentManifest}"
         );
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.True(
             response.StatusCode == HttpStatusCode.NotFound
                 || response.StatusCode == HttpStatusCode.BadRequest,
@@ -112,7 +138,7 @@ public class PullTests
             $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}"
         );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var dcd = response.Headers.GetValues("Docker-Content-Digest").FirstOrDefault();
@@ -124,7 +150,7 @@ public class PullTests
     {
         var request = new HttpRequestMessage(HttpMethod.Head, $"/v2/{Ns}/manifests/tagtest0");
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var dcd = response.Headers.GetValues("Docker-Content-Digest").FirstOrDefault();
@@ -134,7 +160,10 @@ public class PullTests
     [Fact]
     public async Task C3_GetNonexistentManifest_Returns404()
     {
-        var response = await Client.GetAsync($"/v2/{Ns}/manifests/{Data.NonexistentManifest}");
+        var response = await Client.GetAsync(
+            $"/v2/{Ns}/manifests/{Data.NonexistentManifest}",
+            TestContext.Current.CancellationToken
+        );
         Assert.True(
             response.StatusCode == HttpStatusCode.NotFound
                 || response.StatusCode == HttpStatusCode.BadRequest,
@@ -150,7 +179,7 @@ public class PullTests
             $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}"
         );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -159,7 +188,7 @@ public class PullTests
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{Ns}/manifests/tagtest0");
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -173,7 +202,7 @@ public class PullTests
             $"/v2/{Ns}/manifests/sha256:totallywrong"
         );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
-        var response = await Client.SendAsync(request);
+        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.True(
             response.StatusCode == HttpStatusCode.BadRequest
@@ -183,7 +212,9 @@ public class PullTests
 
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
-            var body = await response.Content.ReadAsStringAsync();
+            var body = await response.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken
+            );
             var doc = JsonDocument.Parse(body);
             var errors = doc.RootElement.GetProperty("errors");
             Assert.True(errors.GetArrayLength() > 0, "Expected at least one error entry");

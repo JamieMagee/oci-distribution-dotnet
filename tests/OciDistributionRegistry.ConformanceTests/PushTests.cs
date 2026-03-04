@@ -28,7 +28,11 @@ public class PushTests
     public async Task A1_StreamedUpload_PatchWithBody_Returns202()
     {
         // POST to initiate upload session
-        var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
+        var postResp = await _client.PostAsync(
+            $"/v2/{_namespace}/blobs/uploads/",
+            null,
+            TestContext.Current.CancellationToken
+        );
         postResp.EnsureSuccessStatusCode();
         var location =
             postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
@@ -43,7 +47,7 @@ public class PushTests
             $"0-{_data.TestBlobA.Length - 1}"
         );
 
-        var patchResp = await _client.SendAsync(request);
+        var patchResp = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Accepted, patchResp.StatusCode);
 
@@ -64,7 +68,7 @@ public class PushTests
         var putUrl =
             $"{streamedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobADigest)}";
 
-        var putResp = await _client.PutAsync(putUrl, null);
+        var putResp = await _client.PutAsync(putUrl, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, putResp.StatusCode);
         var location = putResp.Headers.Location?.ToString();
@@ -78,7 +82,10 @@ public class PushTests
     [Fact]
     public async Task B1_GetNonexistentBlob_Returns404()
     {
-        var resp = await _client.GetAsync($"/v2/{_namespace}/blobs/{_data.DummyDigest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_namespace}/blobs/{_data.DummyDigest}",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
     }
@@ -93,7 +100,8 @@ public class PushTests
 
         var resp = await _client.PostAsync(
             $"/v2/{_namespace}/blobs/uploads/?digest={Uri.EscapeDataString(configBlob.Digest)}",
-            content
+            content,
+            TestContext.Current.CancellationToken
         );
 
         Assert.True(
@@ -108,7 +116,11 @@ public class PushTests
         var configBlob = _data.Configs[1];
 
         // POST to initiate
-        var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
+        var postResp = await _client.PostAsync(
+            $"/v2/{_namespace}/blobs/uploads/",
+            null,
+            TestContext.Current.CancellationToken
+        );
         postResp.EnsureSuccessStatusCode();
         var location =
             postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
@@ -120,7 +132,11 @@ public class PushTests
         putContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         putContent.Headers.ContentLength = configBlob.Content.Length;
 
-        var putResp = await _client.PutAsync(putUrl, putContent);
+        var putResp = await _client.PutAsync(
+            putUrl,
+            putContent,
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.Created, putResp.StatusCode);
     }
@@ -129,7 +145,10 @@ public class PushTests
     public async Task B4_GetExistingBlob_Returns200()
     {
         var configBlob = _data.Configs[1];
-        var resp = await _client.GetAsync($"/v2/{_namespace}/blobs/{configBlob.Digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_namespace}/blobs/{configBlob.Digest}",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
@@ -141,14 +160,18 @@ public class PushTests
             _client,
             _namespace,
             _data.LayerBlobData,
-            _data.LayerBlobDigest
+            _data.LayerBlobDigest,
+            TestContext.Current.CancellationToken
         );
     }
 
     [Fact]
     public async Task B6_GetExistingLayer_Returns200()
     {
-        var resp = await _client.GetAsync($"/v2/{_namespace}/blobs/{_data.LayerBlobDigest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_namespace}/blobs/{_data.LayerBlobDigest}",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
@@ -161,7 +184,11 @@ public class PushTests
     public async Task C1_OutOfOrderChunk_Returns416()
     {
         // POST to initiate
-        var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
+        var postResp = await _client.PostAsync(
+            $"/v2/{_namespace}/blobs/uploads/",
+            null,
+            TestContext.Current.CancellationToken
+        );
         postResp.EnsureSuccessStatusCode();
         var location =
             postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
@@ -176,7 +203,7 @@ public class PushTests
             _data.TestBlobBChunk2Range
         );
 
-        var patchResp = await _client.SendAsync(request);
+        var patchResp = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, patchResp.StatusCode);
     }
@@ -185,7 +212,11 @@ public class PushTests
     public async Task C2_PatchFirstChunk_Returns202()
     {
         // POST to initiate
-        var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
+        var postResp = await _client.PostAsync(
+            $"/v2/{_namespace}/blobs/uploads/",
+            null,
+            TestContext.Current.CancellationToken
+        );
         postResp.EnsureSuccessStatusCode();
         var location =
             postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
@@ -200,7 +231,7 @@ public class PushTests
             _data.TestBlobBChunk1Range
         );
 
-        var patchResp = await _client.SendAsync(request);
+        var patchResp = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Accepted, patchResp.StatusCode);
 
@@ -229,7 +260,7 @@ public class PushTests
             _data.TestBlobBChunk1Range
         );
 
-        var patchResp = await _client.SendAsync(request);
+        var patchResp = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, patchResp.StatusCode);
     }
@@ -240,7 +271,10 @@ public class PushTests
         var chunkedUploadLocation = _fixture.State.GetValueOrDefault("push_chunkedUploadLocation");
         Assert.NotEmpty(chunkedUploadLocation);
 
-        var resp = await _client.GetAsync(chunkedUploadLocation);
+        var resp = await _client.GetAsync(
+            chunkedUploadLocation,
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.NoContent, resp.StatusCode);
 
@@ -268,7 +302,7 @@ public class PushTests
             _data.TestBlobBChunk2Range
         );
 
-        var patchResp = await _client.SendAsync(request);
+        var patchResp = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Accepted, patchResp.StatusCode);
 
@@ -288,7 +322,7 @@ public class PushTests
         var putUrl =
             $"{chunkedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobBDigest)}";
 
-        var putResp = await _client.PutAsync(putUrl, null);
+        var putResp = await _client.PutAsync(putUrl, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, putResp.StatusCode);
     }
@@ -302,7 +336,8 @@ public class PushTests
     {
         var resp = await _client.PostAsync(
             $"/v2/{_crossmountNamespace}/blobs/uploads/?mount={Uri.EscapeDataString(_data.DummyDigest)}",
-            null
+            null,
+            TestContext.Current.CancellationToken
         );
 
         Assert.Equal(HttpStatusCode.Accepted, resp.StatusCode);
@@ -313,7 +348,8 @@ public class PushTests
     {
         var resp = await _client.PostAsync(
             $"/v2/{_crossmountNamespace}/blobs/uploads/?mount={Uri.EscapeDataString(_data.TestBlobADigest)}&from={Uri.EscapeDataString(_namespace)}",
-            null
+            null,
+            TestContext.Current.CancellationToken
         );
 
         Assert.True(
@@ -330,7 +366,8 @@ public class PushTests
     public async Task E1_GetNonexistentManifest_Returns404()
     {
         var resp = await _client.GetAsync(
-            $"/v2/{_namespace}/manifests/{_data.NonexistentManifest}"
+            $"/v2/{_namespace}/manifests/{_data.NonexistentManifest}",
+            TestContext.Current.CancellationToken
         );
 
         Assert.True(
@@ -353,7 +390,8 @@ public class PushTests
                 _namespace,
                 tag,
                 manifest.Content,
-                "application/vnd.oci.image.manifest.v1+json"
+                "application/vnd.oci.image.manifest.v1+json",
+                TestContext.Current.CancellationToken
             );
 
             Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
@@ -368,7 +406,8 @@ public class PushTests
             _namespace,
             _data.EmptyLayerManifestDigest,
             _data.EmptyLayerManifestContent,
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json",
+            TestContext.Current.CancellationToken
         );
 
         // Accept 201 primarily, but also accept other success codes
@@ -382,7 +421,10 @@ public class PushTests
     public async Task E4_GetManifestByDigest_Returns200()
     {
         var manifest = _data.Manifests[1];
-        var resp = await _client.GetAsync($"/v2/{_namespace}/manifests/{manifest.Digest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_namespace}/manifests/{manifest.Digest}",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
@@ -399,20 +441,31 @@ public class PushTests
             _client,
             ns,
             _data.Configs[1].Content,
-            _data.Configs[1].Digest
+            _data.Configs[1].Digest,
+            TestContext.Current.CancellationToken
         );
-        await TestData.PushBlobAsync(_client, ns, _data.LayerBlobData, _data.LayerBlobDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            ns,
+            _data.LayerBlobData,
+            _data.LayerBlobDigest,
+            TestContext.Current.CancellationToken
+        );
 
         var pushResp = await TestData.PushManifestAsync(
             _client,
             ns,
             "latest",
             _data.Manifests[1].Content,
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json",
+            TestContext.Current.CancellationToken
         );
         Assert.Equal(HttpStatusCode.Created, pushResp.StatusCode);
 
-        var getResp = await _client.GetAsync($"/v2/{ns}/manifests/latest");
+        var getResp = await _client.GetAsync(
+            $"/v2/{ns}/manifests/latest",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
     }
 

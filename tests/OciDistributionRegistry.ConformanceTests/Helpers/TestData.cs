@@ -368,12 +368,14 @@ public class TestData
         HttpClient client,
         string name,
         byte[] data,
-        string digest
+        string digest,
+        CancellationToken cancellationToken = default
     )
     {
         // Check if blob already exists
         var headResp = await client.SendAsync(
-            new HttpRequestMessage(HttpMethod.Head, $"/v2/{name}/blobs/{digest}")
+            new HttpRequestMessage(HttpMethod.Head, $"/v2/{name}/blobs/{digest}"),
+            cancellationToken
         );
         if (headResp.StatusCode == System.Net.HttpStatusCode.OK)
         {
@@ -381,7 +383,11 @@ public class TestData
         }
 
         // POST to initiate
-        var postResp = await client.PostAsync($"/v2/{name}/blobs/uploads/", null);
+        var postResp = await client.PostAsync(
+            $"/v2/{name}/blobs/uploads/",
+            null,
+            cancellationToken
+        );
         postResp.EnsureSuccessStatusCode();
         var location =
             postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
@@ -394,7 +400,7 @@ public class TestData
             "application/octet-stream"
         );
         putContent.Headers.ContentLength = data.Length;
-        var putResp = await client.PutAsync(putUrl, putContent);
+        var putResp = await client.PutAsync(putUrl, putContent, cancellationToken);
         putResp.EnsureSuccessStatusCode();
 
         return putResp.Headers.Location?.ToString()
@@ -409,14 +415,19 @@ public class TestData
         string name,
         string reference,
         byte[] content,
-        string mediaType
+        string mediaType,
+        CancellationToken cancellationToken = default
     )
     {
         var putContent = new ByteArrayContent(content);
         putContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
             mediaType
         );
-        return await client.PutAsync($"/v2/{name}/manifests/{reference}", putContent);
+        return await client.PutAsync(
+            $"/v2/{name}/manifests/{reference}",
+            putContent,
+            cancellationToken
+        );
     }
 }
 
