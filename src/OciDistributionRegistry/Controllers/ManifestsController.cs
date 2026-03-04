@@ -39,7 +39,7 @@ public class ManifestsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetManifest(string name, string reference)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -90,7 +90,7 @@ public class ManifestsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HeadManifest(string name, string reference)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -140,7 +140,7 @@ public class ManifestsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status413PayloadTooLarge)]
     public async Task<IActionResult> PutManifest(string name, string reference)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -251,7 +251,7 @@ public class ManifestsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status405MethodNotAllowed)]
     public async Task<IActionResult> DeleteManifest(string name, string reference)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 

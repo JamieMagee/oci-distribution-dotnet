@@ -388,4 +388,33 @@ public class PushTests
     }
 
     #endregion
+
+    #region F: Multi-Segment Namespace
+
+    [Fact]
+    public async Task F1_MultiSegmentNamespace_PushAndPull()
+    {
+        var ns = "library/alpine";
+        await TestData.PushBlobAsync(
+            _client,
+            ns,
+            _data.Configs[1].Content,
+            _data.Configs[1].Digest
+        );
+        await TestData.PushBlobAsync(_client, ns, _data.LayerBlobData, _data.LayerBlobDigest);
+
+        var pushResp = await TestData.PushManifestAsync(
+            _client,
+            ns,
+            "latest",
+            _data.Manifests[1].Content,
+            "application/vnd.oci.image.manifest.v1+json"
+        );
+        Assert.Equal(HttpStatusCode.Created, pushResp.StatusCode);
+
+        var getResp = await _client.GetAsync($"/v2/{ns}/manifests/latest");
+        Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
+    }
+
+    #endregion
 }

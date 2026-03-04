@@ -86,6 +86,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Use custom middleware
+app.UseOciNameRewrite();
 app.UseOciErrorHandling();
 app.UseDockerCompatibility();
 

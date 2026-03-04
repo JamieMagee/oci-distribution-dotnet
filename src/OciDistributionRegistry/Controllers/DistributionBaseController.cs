@@ -72,20 +72,40 @@ public class DistributionBaseController : ControllerBase
     }
 
     /// <summary>
+    /// Resolves the real repository name. The name rewrite middleware replaces
+    /// multi-segment names with a placeholder for routing; the original is in HttpContext.Items.
+    /// </summary>
+    protected string ResolveRepositoryName(string routeName)
+    {
+        if (
+            HttpContext.Items.TryGetValue("OciRepositoryName", out var original)
+            && original is string realName
+        )
+        {
+            return realName;
+        }
+        return routeName;
+    }
+
+    /// <summary>
     /// Validates repository name and returns appropriate error response if invalid.
+    /// Resolves the real repository name from the middleware context.
     /// </summary>
     /// <param name="name">Repository name to validate</param>
+    /// <param name="resolvedName">The resolved repository name (from middleware or as-is)</param>
     /// <returns>Null if valid, error response if invalid</returns>
-    protected IActionResult? ValidateRepositoryName(string name)
+    protected IActionResult? ValidateRepositoryName(string name, out string resolvedName)
     {
-        if (string.IsNullOrEmpty(name))
+        resolvedName = ResolveRepositoryName(name);
+
+        if (string.IsNullOrEmpty(resolvedName))
         {
             return BadRequest(
                 CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name cannot be empty")
             );
         }
 
-        if (!RepositoryNameRegex.IsMatch(name))
+        if (!RepositoryNameRegex.IsMatch(resolvedName))
         {
             return BadRequest(
                 CreateErrorResponse(
@@ -95,7 +115,7 @@ public class DistributionBaseController : ControllerBase
             );
         }
 
-        if (name.Length > 255)
+        if (resolvedName.Length > 255)
         {
             return BadRequest(
                 CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name too long")

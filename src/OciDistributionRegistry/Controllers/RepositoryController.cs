@@ -44,7 +44,7 @@ public class RepositoryController : DistributionBaseController
         [FromQuery] string? last = null
     )
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -111,7 +111,7 @@ public class RepositoryController : DistributionBaseController
         [FromQuery] string? artifactType = null
     )
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 

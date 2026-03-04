@@ -39,7 +39,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBlob(string name, string digest)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -104,7 +104,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HeadBlob(string name, string digest)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -146,7 +146,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status405MethodNotAllowed)]
     public async Task<IActionResult> DeleteBlob(string name, string digest)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -191,7 +191,7 @@ public class BlobsController : DistributionBaseController
         [FromQuery] string? from = null
     )
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -242,7 +242,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status416RequestedRangeNotSatisfiable)]
     public async Task<IActionResult> UploadChunk(string name, string uuid)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -329,7 +329,7 @@ public class BlobsController : DistributionBaseController
         [FromQuery] string digest
     )
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -385,7 +385,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUploadStatus(string name, string uuid)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
@@ -418,7 +418,7 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> CancelUpload(string name, string uuid)
     {
-        var repoValidation = ValidateRepositoryName(name);
+        var repoValidation = ValidateRepositoryName(name, out name);
         if (repoValidation != null)
             return repoValidation;
 
