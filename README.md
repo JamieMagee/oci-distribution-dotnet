@@ -15,15 +15,48 @@ cd src/OciDistributionRegistry
 dotnet run
 ```
 
-The registry listens on the ports configured in `Properties/launchSettings.json`. Storage defaults to `/tmp/oci-registry` but you can change it in `appsettings.json` under `Storage:Path`.
+The registry listens on `http://localhost:5106` by default (see `Properties/launchSettings.json`). Storage defaults to `/tmp/oci-registry` but you can change it in `appsettings.json` under `Storage:Path`.
 
 Quick smoke test:
 
 ```sh
-curl http://localhost:5000/v2/
+curl http://localhost:5106/v2/
 ```
 
 You should get a `200 OK`.
+
+## Using it with container tools
+
+Since the registry serves plain HTTP, most clients need a flag to skip TLS.
+
+### crane
+
+```sh
+crane copy docker.io/library/alpine:latest localhost:5106/library/alpine:latest --insecure
+```
+
+### podman
+
+```sh
+podman pull --tls-verify=false localhost:5106/library/alpine:latest
+```
+
+### docker
+
+Docker doesn't have a per-command insecure flag. Add the registry to `/etc/docker/daemon.json`:
+
+```json
+{
+  "insecure-registries": ["localhost:5106"]
+}
+```
+
+Then restart and pull:
+
+```sh
+sudo systemctl restart docker
+docker pull localhost:5106/library/alpine:latest
+```
 
 ## Docker
 
