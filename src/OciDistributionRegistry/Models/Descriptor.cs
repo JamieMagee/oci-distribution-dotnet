@@ -47,5 +47,6 @@ public class Descriptor
     /// Optional artifact type for the descriptor.
     /// </summary>
     [JsonPropertyName("artifactType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ArtifactType { get; set; }
 }

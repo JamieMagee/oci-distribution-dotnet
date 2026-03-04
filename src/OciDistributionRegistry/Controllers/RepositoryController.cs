@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OciDistributionRegistry.Models;
 using OciDistributionRegistry.Repositories;
+using OciDistributionRegistry.Services;
 
 namespace OciDistributionRegistry.Controllers;
 
@@ -12,12 +13,15 @@ namespace OciDistributionRegistry.Controllers;
 public class RepositoryController : DistributionBaseController
 {
     private readonly IManifestRepository _manifestRepository;
+    private readonly IValidationService _validationService;
 
     public RepositoryController(
         IManifestRepository manifestRepository,
+        IValidationService validationService,
         ILogger<RepositoryController> logger) : base(logger)
     {
         _manifestRepository = manifestRepository;
+        _validationService = validationService;
     }
 
     /// <summary>
@@ -88,18 +92,16 @@ public class RepositoryController : DistributionBaseController
     /// <returns>List of referrers as an OCI Index</returns>
     /// <response code="200">Referrers retrieved successfully</response>
     /// <response code="400">Invalid digest format</response>
-    /// <response code="404">Repository or manifest not found</response>
     [HttpGet("referrers/{digest}")]
     [ProducesResponseType(typeof(ImageIndex), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ListReferrers(string name, string digest, [FromQuery] string? artifactType = null)
     {
         var repoValidation = ValidateRepositoryName(name);
         if (repoValidation != null) return repoValidation;
 
         // Validate digest format
-        if (string.IsNullOrEmpty(digest) || !digest.Contains(':'))
+        if (!_validationService.IsValidDigest(digest))
         {
             return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
         }
@@ -125,7 +127,15 @@ public class RepositoryController : DistributionBaseController
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to list referrers for {Digest} in repository {Repository}", digest, name);
-            return NotFound(CreateErrorResponse(OciErrorCodes.NameUnknown, "Repository not found"));
+            var emptyIndex = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new Models.ImageIndex
+            {
+                SchemaVersion = 2,
+                MediaType = Models.OciMediaTypes.ImageIndex,
+                Manifests = Array.Empty<Models.Descriptor>()
+            });
+            Response.ContentType = Models.OciMediaTypes.ImageIndex;
+            AddDockerHeaders();
+            return File(emptyIndex, Models.OciMediaTypes.ImageIndex);
         }
     }
 }

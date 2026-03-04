@@ -74,7 +74,7 @@ public interface IManifestRepository
     /// <param name="annotations">Optional annotations</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task</returns>
-    Task AddReferrerAsync(string repository, string subjectDigest, string referrerDigest, string artifactType, Dictionary<string, string>? annotations = null, CancellationToken cancellationToken = default);
+    Task AddReferrerAsync(string repository, string subjectDigest, string referrerDigest, string artifactType, string mediaType, Dictionary<string, string>? annotations = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a referrer relationship.

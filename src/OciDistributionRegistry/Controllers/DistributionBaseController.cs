@@ -11,6 +11,10 @@ namespace OciDistributionRegistry.Controllers;
 [Produces("application/json")]
 public class DistributionBaseController : ControllerBase
 {
+    private static readonly System.Text.RegularExpressions.Regex RepositoryNameRegex =
+        new(@"^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*$",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
     protected readonly ILogger<DistributionBaseController> Logger;
 
     public DistributionBaseController(ILogger<DistributionBaseController> logger)
@@ -74,7 +78,11 @@ public class DistributionBaseController : ControllerBase
             return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name cannot be empty"));
         }
 
-        // Basic validation - in practice you'd use the validation service
+        if (!RepositoryNameRegex.IsMatch(name))
+        {
+            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name does not match required format"));
+        }
+
         if (name.Length > 255)
         {
             return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name too long"));
