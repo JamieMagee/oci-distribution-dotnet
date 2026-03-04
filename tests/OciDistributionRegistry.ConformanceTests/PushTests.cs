@@ -62,9 +62,10 @@ public class PushTests
         var streamedUploadLocation = _fixture.State.GetValueOrDefault(
             "push_streamedUploadLocation"
         );
+        Assert.NotNull(streamedUploadLocation);
         Assert.NotEmpty(streamedUploadLocation);
 
-        var separator = streamedUploadLocation!.Contains('?') ? "&" : "?";
+        var separator = streamedUploadLocation.Contains('?') ? "&" : "?";
         var putUrl =
             $"{streamedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobADigest)}";
 
@@ -248,6 +249,7 @@ public class PushTests
     public async Task C3_RetryPreviousChunk_Returns416()
     {
         var chunkedUploadLocation = _fixture.State.GetValueOrDefault("push_chunkedUploadLocation");
+        Assert.NotNull(chunkedUploadLocation);
         Assert.NotEmpty(chunkedUploadLocation);
 
         // PATCH chunk1 again at the same location
@@ -269,6 +271,7 @@ public class PushTests
     public async Task C4_GetUploadStatus_Returns204()
     {
         var chunkedUploadLocation = _fixture.State.GetValueOrDefault("push_chunkedUploadLocation");
+        Assert.NotNull(chunkedUploadLocation);
         Assert.NotEmpty(chunkedUploadLocation);
 
         var resp = await _client.GetAsync(
@@ -291,6 +294,7 @@ public class PushTests
     public async Task C5_PatchSecondChunk_Returns202()
     {
         var chunkedUploadLocation = _fixture.State.GetValueOrDefault("push_chunkedUploadLocation");
+        Assert.NotNull(chunkedUploadLocation);
         Assert.NotEmpty(chunkedUploadLocation);
 
         var request = new HttpRequestMessage(HttpMethod.Patch, chunkedUploadLocation);
@@ -316,9 +320,10 @@ public class PushTests
     public async Task C6_PutCloseSession_Returns201()
     {
         var chunkedUploadLocation = _fixture.State.GetValueOrDefault("push_chunkedUploadLocation");
+        Assert.NotNull(chunkedUploadLocation);
         Assert.NotEmpty(chunkedUploadLocation);
 
-        var separator = chunkedUploadLocation!.Contains('?') ? "&" : "?";
+        var separator = chunkedUploadLocation.Contains('?') ? "&" : "?";
         var putUrl =
             $"{chunkedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobBDigest)}";
 

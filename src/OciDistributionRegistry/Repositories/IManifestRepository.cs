@@ -100,6 +100,7 @@ public interface IManifestRepository
     /// <param name="subjectDigest">The subject digest</param>
     /// <param name="referrerDigest">The referrer digest</param>
     /// <param name="artifactType">The artifact type</param>
+    /// <param name="mediaType">The media type</param>
     /// <param name="annotations">Optional annotations</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task</returns>

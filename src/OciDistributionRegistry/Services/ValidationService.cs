@@ -36,6 +36,7 @@ public interface IValidationService
     /// </summary>
     /// <param name="manifestData">The manifest data</param>
     /// <param name="mediaType">The manifest media type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Validation result</returns>
     Task<ValidationResult> ValidateManifestAsync(
         byte[] manifestData,

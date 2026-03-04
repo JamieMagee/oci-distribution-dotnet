@@ -80,7 +80,7 @@ public class RepositoryController : DistributionBaseController
             if (!string.IsNullOrEmpty(nextTag))
             {
                 var linkUrl = $"/v2/{name}/tags/list?n={n ?? tags.Length}&last={nextTag}";
-                Response.Headers.Add("Link", $"<{linkUrl}>; rel=\"next\"");
+                Response.Headers["Link"] = $"<{linkUrl}>; rel=\"next\"";
             }
 
             AddDockerHeaders();
@@ -141,7 +141,7 @@ public class RepositoryController : DistributionBaseController
             // Add OCI-Filters-Applied header if filtering was applied
             if (!string.IsNullOrEmpty(artifactType))
             {
-                Response.Headers.Add("OCI-Filters-Applied", "artifactType");
+                Response.Headers["OCI-Filters-Applied"] = "artifactType";
             }
 
             Response.ContentType = OciMediaTypes.ImageIndex;

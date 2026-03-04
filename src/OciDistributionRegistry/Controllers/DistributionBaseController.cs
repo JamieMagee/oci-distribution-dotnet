@@ -39,7 +39,7 @@ public class DistributionBaseController : ControllerBase
         Logger.LogDebug("API version check requested");
 
         // Add Docker compatibility headers
-        Response.Headers.Add("Docker-Distribution-API-Version", "registry/2.0");
+        Response.Headers["Docker-Distribution-API-Version"] = "registry/2.0";
 
         return Ok();
     }
@@ -131,10 +131,10 @@ public class DistributionBaseController : ControllerBase
     /// <param name="digest">Content digest</param>
     protected void AddDockerHeaders(string? digest = null)
     {
-        Response.Headers.Add("Docker-Distribution-API-Version", "registry/2.0");
+        Response.Headers["Docker-Distribution-API-Version"] = "registry/2.0";
         if (!string.IsNullOrEmpty(digest))
         {
-            Response.Headers.Add("Docker-Content-Digest", digest);
+            Response.Headers["Docker-Content-Digest"] = digest;
         }
     }
 }

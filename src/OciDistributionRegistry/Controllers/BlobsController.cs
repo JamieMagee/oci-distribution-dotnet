@@ -73,8 +73,8 @@ public class BlobsController : DistributionBaseController
             }
 
             AddDockerHeaders(digest);
-            Response.Headers.Add("Content-Range", $"bytes {start}-{end}/{size.Value}");
-            Response.Headers.Add("Content-Length", (end - start + 1).ToString());
+            Response.Headers["Content-Range"] = $"bytes {start}-{end}/{size.Value}";
+            Response.Headers["Content-Length"] = (end - start + 1).ToString();
 
             return File(rangeStream, "application/octet-stream");
         }
@@ -86,7 +86,7 @@ public class BlobsController : DistributionBaseController
         }
 
         AddDockerHeaders(digest);
-        Response.Headers.Add("Content-Length", size.ToString());
+        Response.Headers["Content-Length"] = size.ToString();
 
         return File(blobStream, "application/octet-stream");
     }
@@ -126,7 +126,7 @@ public class BlobsController : DistributionBaseController
         var size = await _blobRepository.GetSizeAsync(digest);
 
         AddDockerHeaders(digest);
-        Response.Headers.Add("Content-Length", size.ToString());
+        Response.Headers["Content-Length"] = size.ToString();
 
         return Ok();
     }
@@ -220,9 +220,9 @@ public class BlobsController : DistributionBaseController
         var location = $"/v2/{name}/blobs/uploads/{sessionId}";
 
         AddDockerHeaders();
-        Response.Headers.Add("Location", location);
-        Response.Headers.Add("Range", "0-0");
-        Response.Headers.Add("OCI-Chunk-Min-Length", "0");
+        Response.Headers["Location"] = location;
+        Response.Headers["Range"] = "0-0";
+        Response.Headers["OCI-Chunk-Min-Length"] = "0";
 
         return Accepted();
     }
@@ -285,8 +285,8 @@ public class BlobsController : DistributionBaseController
 
             var location = $"/v2/{name}/blobs/uploads/{uuid}";
             AddDockerHeaders();
-            Response.Headers.Add("Location", location);
-            Response.Headers.Add("Range", $"0-{end}");
+            Response.Headers["Location"] = location;
+            Response.Headers["Range"] = $"0-{end}";
 
             return Accepted();
         }
@@ -352,7 +352,7 @@ public class BlobsController : DistributionBaseController
 
             var location = $"/v2/{name}/blobs/{digest}";
             AddDockerHeaders(digest);
-            Response.Headers.Add("Location", location);
+            Response.Headers["Location"] = location;
 
             return Created(location, null);
         }
@@ -401,8 +401,8 @@ public class BlobsController : DistributionBaseController
 
         var location = $"/v2/{name}/blobs/uploads/{uuid}";
         AddDockerHeaders();
-        Response.Headers.Add("Location", location);
-        Response.Headers.Add("Range", $"{status.Value.Start}-{status.Value.End}");
+        Response.Headers["Location"] = location;
+        Response.Headers["Range"] = $"{status.Value.Start}-{status.Value.End}";
 
         return NoContent();
     }
@@ -452,7 +452,7 @@ public class BlobsController : DistributionBaseController
             var location = $"/v2/{name}/blobs/uploads/{sessionId}";
 
             AddDockerHeaders();
-            Response.Headers.Add("Location", location);
+            Response.Headers["Location"] = location;
 
             return Accepted();
         }
@@ -460,7 +460,7 @@ public class BlobsController : DistributionBaseController
         // Blob exists, return success
         var blobLocation = $"/v2/{name}/blobs/{mount}";
         AddDockerHeaders(mount);
-        Response.Headers.Add("Location", blobLocation);
+        Response.Headers["Location"] = blobLocation;
 
         return Created(blobLocation, null);
     }
@@ -501,7 +501,7 @@ public class BlobsController : DistributionBaseController
 
         var location = $"/v2/{name}/blobs/{digest}";
         AddDockerHeaders(digest);
-        Response.Headers.Add("Location", location);
+        Response.Headers["Location"] = location;
 
         return Created(location, null);
     }

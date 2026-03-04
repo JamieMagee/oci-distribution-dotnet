@@ -71,7 +71,7 @@ public class ManifestsController : DistributionBaseController
         var (data, mediaType, digest) = result.Value;
 
         AddDockerHeaders(digest);
-        Response.Headers.Add("Content-Length", data.Length.ToString());
+        Response.Headers["Content-Length"] = data.Length.ToString();
         Response.ContentType = mediaType;
 
         return File(data, mediaType);
@@ -119,7 +119,7 @@ public class ManifestsController : DistributionBaseController
         var (data, mediaType, digest) = result.Value;
 
         AddDockerHeaders(digest);
-        Response.Headers.Add("Content-Length", data.Length.ToString());
+        Response.Headers["Content-Length"] = data.Length.ToString();
         Response.ContentType = mediaType;
 
         return Ok();
@@ -210,13 +210,13 @@ public class ManifestsController : DistributionBaseController
 
             var location = $"/v2/{name}/manifests/{digest}";
             AddDockerHeaders(digest);
-            Response.Headers.Add("Location", location);
+            Response.Headers["Location"] = location;
 
             // Add OCI-Subject header if manifest has subject field
             var subjectDigest = ExtractSubjectDigest(manifestData);
             if (!string.IsNullOrEmpty(subjectDigest))
             {
-                Response.Headers.Add("OCI-Subject", subjectDigest);
+                Response.Headers["OCI-Subject"] = subjectDigest;
             }
 
             return Created(location, null);
