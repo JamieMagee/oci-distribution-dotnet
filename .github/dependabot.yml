@@ -4,21 +4,18 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    groups:
-      dotnet:
-        patterns:
-          - "*"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    groups:
-      actions:
-        patterns:
-          - "*"
 
   - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: dotnet-sdk
     directory: /
     schedule:
       interval: weekly
