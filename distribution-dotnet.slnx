@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/tests/">
+    <Project Path="tests/OciDistributionRegistry.ConformanceTests/OciDistributionRegistry.ConformanceTests.csproj" />
+  </Folder>
+  <Project Path="src/OciDistributionRegistry/OciDistributionRegistry.csproj" />
+</Solution>
