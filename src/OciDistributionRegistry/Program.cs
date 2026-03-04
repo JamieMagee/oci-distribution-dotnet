@@ -16,7 +16,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container
-builder.Services.AddControllers()
+builder
+    .Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
@@ -28,14 +29,23 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 // Add health checks
-builder.Services.AddHealthChecks()
-    .AddCheck("storage", () =>
-    {
-        var storagePath = builder.Configuration.GetValue<string>("Storage:Path") ?? "/tmp/oci-registry";
-        return Directory.Exists(storagePath) 
-            ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Storage directory accessible")
-            : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("Storage directory not accessible");
-    });
+builder
+    .Services.AddHealthChecks()
+    .AddCheck(
+        "storage",
+        () =>
+        {
+            var storagePath =
+                builder.Configuration.GetValue<string>("Storage:Path") ?? "/tmp/oci-registry";
+            return Directory.Exists(storagePath)
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(
+                    "Storage directory accessible"
+                )
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(
+                    "Storage directory not accessible"
+                );
+        }
+    );
 
 // Register repositories
 builder.Services.AddSingleton<IBlobRepository, FileSystemBlobRepository>();
@@ -52,10 +62,18 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .WithExposedHeaders("Docker-Content-Digest", "Location", "Range", "Content-Length", "OCI-Subject", "OCI-Filters-Applied");
+        builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithExposedHeaders(
+                "Docker-Content-Digest",
+                "Location",
+                "Range",
+                "Content-Length",
+                "OCI-Subject",
+                "OCI-Filters-Applied"
+            );
     });
 });
 
@@ -82,7 +100,10 @@ app.MapControllers();
 
 // Log startup information
 Log.Information("OCI Distribution Registry starting up...");
-Log.Information("Storage path: {StoragePath}", builder.Configuration.GetValue<string>("Storage:Path") ?? "/tmp/oci-registry");
+Log.Information(
+    "Storage path: {StoragePath}",
+    builder.Configuration.GetValue<string>("Storage:Path") ?? "/tmp/oci-registry"
+);
 
 try
 {

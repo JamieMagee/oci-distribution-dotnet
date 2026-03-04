@@ -33,8 +33,9 @@ public static class OciMediaTypes
     public const string ImageLayerGzip = "application/vnd.oci.image.layer.v1.tar+gzip";
     public const string ImageLayerZstd = "application/vnd.oci.image.layer.v1.tar+zstd";
     public const string EmptyJSON = "application/vnd.oci.empty.v1+json";
-    
+
     // Docker compatibility
     public const string DockerManifest = "application/vnd.docker.distribution.manifest.v2+json";
-    public const string DockerManifestList = "application/vnd.docker.distribution.manifest.list.v2+json";
+    public const string DockerManifestList =
+        "application/vnd.docker.distribution.manifest.list.v2+json";
 }

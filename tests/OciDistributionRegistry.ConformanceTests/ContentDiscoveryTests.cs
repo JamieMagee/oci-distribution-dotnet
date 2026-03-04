@@ -6,7 +6,7 @@ using Xunit;
 namespace OciDistributionRegistry.ConformanceTests;
 
 [Collection("Conformance")]
-[TestCaseOrderer("OciDistributionRegistry.ConformanceTests.Helpers.AlphabeticalOrderer", "OciDistributionRegistry.ConformanceTests")]
+[TestCaseOrderer(typeof(AlphabeticalOrderer))]
 public class ContentDiscoveryTests
 {
     private readonly RegistryFixture _fixture;
@@ -29,8 +29,18 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task A01_Setup_PushConfigBlobs()
     {
-        await TestData.PushBlobAsync(_client, _ns, _data.Configs[2].Content, _data.Configs[2].Digest);
-        await TestData.PushBlobAsync(_client, _ns, _data.Configs[4].Content, _data.Configs[4].Digest);
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.Configs[2].Content,
+            _data.Configs[2].Digest
+        );
+        await TestData.PushBlobAsync(
+            _client,
+            _ns,
+            _data.Configs[4].Content,
+            _data.Configs[4].Digest
+        );
     }
 
     [Fact]
@@ -58,7 +68,13 @@ public class ContentDiscoveryTests
         string[] tags = ["test0", "TEST0", "test1", "TEST1", "test2", "TEST2", "test3", "TEST3"];
         foreach (var tag in tags)
         {
-            var resp = await TestData.PushManifestAsync(_client, _ns, tag, _data.Manifests[2].Content, ManifestMediaType);
+            var resp = await TestData.PushManifestAsync(
+                _client,
+                _ns,
+                tag,
+                _data.Manifests[2].Content,
+                ManifestMediaType
+            );
             Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         }
     }
@@ -66,7 +82,13 @@ public class ContentDiscoveryTests
     [Fact]
     public async Task A06_Setup_PushManifest4WithTag()
     {
-        var resp = await TestData.PushManifestAsync(_client, _ns, "tagtest0", _data.Manifests[4].Content, ManifestMediaType);
+        var resp = await TestData.PushManifestAsync(
+            _client,
+            _ns,
+            "tagtest0",
+            _data.Manifests[4].Content,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
 
@@ -74,8 +96,12 @@ public class ContentDiscoveryTests
     public async Task A07_Setup_PushRefsManifestAConfigArtifact()
     {
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsManifestAConfigArtifactDigest,
-            _data.RefsManifestAConfigArtifactContent, ManifestMediaType);
+            _client,
+            _ns,
+            _data.RefsManifestAConfigArtifactDigest,
+            _data.RefsManifestAConfigArtifactContent,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
         if (resp.Headers.TryGetValues("OCI-Subject", out var values))
@@ -88,8 +114,12 @@ public class ContentDiscoveryTests
     public async Task A08_Setup_PushRefsManifestALayerArtifact()
     {
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsManifestALayerArtifactDigest,
-            _data.RefsManifestALayerArtifactContent, ManifestMediaType);
+            _client,
+            _ns,
+            _data.RefsManifestALayerArtifactDigest,
+            _data.RefsManifestALayerArtifactContent,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
         if (resp.Headers.TryGetValues("OCI-Subject", out var values))
@@ -102,8 +132,12 @@ public class ContentDiscoveryTests
     public async Task A09_Setup_PushRefsIndexArtifact()
     {
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsIndexArtifactDigest,
-            _data.RefsIndexArtifactContent, IndexMediaType);
+            _client,
+            _ns,
+            _data.RefsIndexArtifactDigest,
+            _data.RefsIndexArtifactContent,
+            IndexMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
 
         if (resp.Headers.TryGetValues("OCI-Subject", out var values))
@@ -116,8 +150,12 @@ public class ContentDiscoveryTests
     public async Task A10_Setup_PushRefsManifestBConfigArtifact()
     {
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsManifestBConfigArtifactDigest,
-            _data.RefsManifestBConfigArtifactContent, ManifestMediaType);
+            _client,
+            _ns,
+            _data.RefsManifestBConfigArtifactDigest,
+            _data.RefsManifestBConfigArtifactContent,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
 
@@ -125,8 +163,12 @@ public class ContentDiscoveryTests
     public async Task A11_Setup_PushRefsManifestBLayerArtifact()
     {
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsManifestBLayerArtifactDigest,
-            _data.RefsManifestBLayerArtifactContent, ManifestMediaType);
+            _client,
+            _ns,
+            _data.RefsManifestBLayerArtifactDigest,
+            _data.RefsManifestBLayerArtifactContent,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
 
@@ -135,8 +177,12 @@ public class ContentDiscoveryTests
     {
         // Subject is manifests[3], which was NOT pushed — tests non-existent subject referrers
         var resp = await TestData.PushManifestAsync(
-            _client, _ns, _data.RefsManifestCLayerArtifactDigest,
-            _data.RefsManifestCLayerArtifactContent, ManifestMediaType);
+            _client,
+            _ns,
+            _data.RefsManifestCLayerArtifactDigest,
+            _data.RefsManifestCLayerArtifactContent,
+            ManifestMediaType
+        );
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
     }
 
@@ -150,7 +196,8 @@ public class ContentDiscoveryTests
 
         var body = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(body);
-        var tags = doc.RootElement.GetProperty("tags")
+        var tags = doc
+            .RootElement.GetProperty("tags")
             .EnumerateArray()
             .Select(e => e.GetString()!)
             .ToList();
@@ -163,7 +210,8 @@ public class ContentDiscoveryTests
 
         Assert.True(
             tags.SequenceEqual(lexicalSorted) || tags.SequenceEqual(ordinalSorted),
-            $"Tags are not in sorted order. Got: [{string.Join(", ", tags)}]");
+            $"Tags are not in sorted order. Got: [{string.Join(", ", tags)}]"
+        );
     }
 
     [Fact]
@@ -174,7 +222,8 @@ public class ContentDiscoveryTests
 
         var body = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(body);
-        var tags = doc.RootElement.GetProperty("tags")
+        var tags = doc
+            .RootElement.GetProperty("tags")
             .EnumerateArray()
             .Select(e => e.GetString()!)
             .ToList();
@@ -191,7 +240,8 @@ public class ContentDiscoveryTests
 
         var body1 = await resp1.Content.ReadAsStringAsync();
         using var doc1 = JsonDocument.Parse(body1);
-        var page1Tags = doc1.RootElement.GetProperty("tags")
+        var page1Tags = doc1
+            .RootElement.GetProperty("tags")
             .EnumerateArray()
             .Select(e => e.GetString()!)
             .ToList();
@@ -200,12 +250,15 @@ public class ContentDiscoveryTests
         var lastTag = page1Tags.Last();
 
         // Second page
-        var resp2 = await _client.GetAsync($"/v2/{_ns}/tags/list?n=4&last={Uri.EscapeDataString(lastTag)}");
+        var resp2 = await _client.GetAsync(
+            $"/v2/{_ns}/tags/list?n=4&last={Uri.EscapeDataString(lastTag)}"
+        );
         Assert.Equal(HttpStatusCode.OK, resp2.StatusCode);
 
         var body2 = await resp2.Content.ReadAsStringAsync();
         using var doc2 = JsonDocument.Parse(body2);
-        var page2Tags = doc2.RootElement.GetProperty("tags")
+        var page2Tags = doc2
+            .RootElement.GetProperty("tags")
             .EnumerateArray()
             .Select(e => e.GetString()!)
             .ToList();
@@ -260,7 +313,8 @@ public class ContentDiscoveryTests
     public async Task C3_ReferrersWithArtifactTypeFilter_ReturnsFilteredResults()
     {
         var resp = await _client.GetAsync(
-            $"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}?artifactType={Uri.EscapeDataString(_data.TestRefArtifactTypeA)}");
+            $"/v2/{_ns}/referrers/{_data.Manifests[4].Digest}?artifactType={Uri.EscapeDataString(_data.TestRefArtifactTypeA)}"
+        );
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
 
         var body = await resp.Content.ReadAsStringAsync();
@@ -292,6 +346,9 @@ public class ContentDiscoveryTests
         Assert.Equal(1, manifests.GetArrayLength());
 
         var referrer = manifests[0];
-        Assert.Equal(_data.RefsManifestCLayerArtifactDigest, referrer.GetProperty("digest").GetString());
+        Assert.Equal(
+            _data.RefsManifestCLayerArtifactDigest,
+            referrer.GetProperty("digest").GetString()
+        );
     }
 }

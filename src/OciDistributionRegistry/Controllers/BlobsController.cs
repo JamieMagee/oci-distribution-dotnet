@@ -16,9 +16,11 @@ public class BlobsController : DistributionBaseController
     private readonly IValidationService _validationService;
 
     public BlobsController(
-        IBlobRepository blobRepository, 
+        IBlobRepository blobRepository,
         IValidationService validationService,
-        ILogger<BlobsController> logger) : base(logger)
+        ILogger<BlobsController> logger
+    )
+        : base(logger)
     {
         _blobRepository = blobRepository;
         _validationService = validationService;
@@ -38,11 +40,14 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> GetBlob(string name, string digest)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!_validationService.IsValidDigest(digest))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format")
+            );
         }
 
         Logger.LogDebug("Getting blob {Digest} from repository {Repository}", digest, name);
@@ -56,7 +61,10 @@ public class BlobsController : DistributionBaseController
             var rangeSpec = rangeHeader.Replace("bytes=", "");
             var parts = rangeSpec.Split('-');
             var start = long.Parse(parts[0]);
-            var end = parts.Length > 1 && !string.IsNullOrEmpty(parts[1]) ? long.Parse(parts[1]) : size.Value - 1;
+            var end =
+                parts.Length > 1 && !string.IsNullOrEmpty(parts[1])
+                    ? long.Parse(parts[1])
+                    : size.Value - 1;
 
             var rangeStream = await _blobRepository.GetRangeAsync(digest, start, end);
             if (rangeStream == null)
@@ -79,7 +87,7 @@ public class BlobsController : DistributionBaseController
 
         AddDockerHeaders(digest);
         Response.Headers.Add("Content-Length", size.ToString());
-        
+
         return File(blobStream, "application/octet-stream");
     }
 
@@ -97,11 +105,14 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> HeadBlob(string name, string digest)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!_validationService.IsValidDigest(digest))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format")
+            );
         }
 
         Logger.LogDebug("Checking blob {Digest} in repository {Repository}", digest, name);
@@ -113,10 +124,10 @@ public class BlobsController : DistributionBaseController
         }
 
         var size = await _blobRepository.GetSizeAsync(digest);
-        
+
         AddDockerHeaders(digest);
         Response.Headers.Add("Content-Length", size.ToString());
-        
+
         return Ok();
     }
 
@@ -136,11 +147,14 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> DeleteBlob(string name, string digest)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!_validationService.IsValidDigest(digest))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format")
+            );
         }
 
         Logger.LogInformation("Deleting blob {Digest} from repository {Repository}", digest, name);
@@ -174,13 +188,20 @@ public class BlobsController : DistributionBaseController
         string name,
         [FromQuery] string? digest = null,
         [FromQuery] string? mount = null,
-        [FromQuery] string? from = null)
+        [FromQuery] string? from = null
+    )
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
-        Logger.LogDebug("Initiating upload for repository {Repository}, digest={Digest}, mount={Mount}, from={From}", 
-            name, digest, mount, from);
+        Logger.LogDebug(
+            "Initiating upload for repository {Repository}, digest={Digest}, mount={Mount}, from={From}",
+            name,
+            digest,
+            mount,
+            from
+        );
 
         // Handle blob mounting
         if (!string.IsNullOrEmpty(mount) && !string.IsNullOrEmpty(from))
@@ -222,7 +243,8 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> UploadChunk(string name, string uuid)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         var contentRange = Request.Headers["Content-Range"].ToString();
         var contentLength = Request.ContentLength ?? 0;
@@ -235,19 +257,32 @@ public class BlobsController : DistributionBaseController
         }
         else
         {
-            var rangeValidation = _validationService.ValidateContentRange(contentRange, contentLength);
+            var rangeValidation = _validationService.ValidateContentRange(
+                contentRange,
+                contentLength
+            );
             if (!rangeValidation.IsValid)
             {
-                return BadRequest(CreateErrorResponse(OciErrorCodes.SizeInvalid, rangeValidation.ErrorMessage));
+                return BadRequest(
+                    CreateErrorResponse(OciErrorCodes.SizeInvalid, rangeValidation.ErrorMessage)
+                );
             }
         }
 
-        Logger.LogDebug("Uploading chunk for session {SessionId}, range {Range}", uuid, contentRange ?? "(streamed)");
+        Logger.LogDebug(
+            "Uploading chunk for session {SessionId}, range {Range}",
+            uuid,
+            contentRange ?? "(streamed)"
+        );
 
         try
         {
-            var (start, end) = await _blobRepository.WriteUploadAsync(uuid, Request.Body, contentRange);
-            
+            var (start, end) = await _blobRepository.WriteUploadAsync(
+                uuid,
+                Request.Body,
+                contentRange
+            );
+
             var location = $"/v2/{name}/blobs/uploads/{uuid}";
             AddDockerHeaders();
             Response.Headers.Add("Location", location);
@@ -258,13 +293,18 @@ public class BlobsController : DistributionBaseController
         catch (InvalidOperationException ex)
         {
             Logger.LogWarning(ex, "Upload chunk failed for session {SessionId}", uuid);
-            
+
             if (ex.Message.Contains("not found"))
-                return NotFound(CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found"));
-            
+                return NotFound(
+                    CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found")
+                );
+
             if (ex.Message.Contains("Range"))
-                return StatusCode(416, CreateErrorResponse(OciErrorCodes.BlobUploadInvalid, ex.Message));
-            
+                return StatusCode(
+                    416,
+                    CreateErrorResponse(OciErrorCodes.BlobUploadInvalid, ex.Message)
+                );
+
             return BadRequest(CreateErrorResponse(OciErrorCodes.BlobUploadInvalid, ex.Message));
         }
     }
@@ -283,22 +323,33 @@ public class BlobsController : DistributionBaseController
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CompleteUpload(string name, string uuid, [FromQuery] string digest)
+    public async Task<IActionResult> CompleteUpload(
+        string name,
+        string uuid,
+        [FromQuery] string digest
+    )
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!_validationService.IsValidDigest(digest))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format")
+            );
         }
 
-        Logger.LogInformation("Completing upload session {SessionId} with digest {Digest}", uuid, digest);
+        Logger.LogInformation(
+            "Completing upload session {SessionId} with digest {Digest}",
+            uuid,
+            digest
+        );
 
         try
         {
             await _blobRepository.CompleteUploadAsync(uuid, digest, Request.Body);
-            
+
             var location = $"/v2/{name}/blobs/{digest}";
             AddDockerHeaders(digest);
             Response.Headers.Add("Location", location);
@@ -308,13 +359,15 @@ public class BlobsController : DistributionBaseController
         catch (InvalidOperationException ex)
         {
             Logger.LogWarning(ex, "Upload completion failed for session {SessionId}", uuid);
-            
+
             if (ex.Message.Contains("not found"))
-                return NotFound(CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found"));
-            
+                return NotFound(
+                    CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found")
+                );
+
             if (ex.Message.Contains("Digest mismatch"))
                 return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, ex.Message));
-            
+
             return BadRequest(CreateErrorResponse(OciErrorCodes.BlobUploadInvalid, ex.Message));
         }
     }
@@ -333,14 +386,17 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> GetUploadStatus(string name, string uuid)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         Logger.LogDebug("Getting upload status for session {SessionId}", uuid);
 
         var status = await _blobRepository.GetUploadStatusAsync(uuid);
         if (status == null)
         {
-            return NotFound(CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found"));
+            return NotFound(
+                CreateErrorResponse(OciErrorCodes.BlobUploadUnknown, "Upload session not found")
+            );
         }
 
         var location = $"/v2/{name}/blobs/uploads/{uuid}";
@@ -363,9 +419,14 @@ public class BlobsController : DistributionBaseController
     public async Task<IActionResult> CancelUpload(string name, string uuid)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
-        Logger.LogInformation("Cancelling upload session {SessionId} for repository {Repository}", uuid, name);
+        Logger.LogInformation(
+            "Cancelling upload session {SessionId} for repository {Repository}",
+            uuid,
+            name
+        );
 
         await _blobRepository.CancelUploadAsync(uuid);
 
@@ -377,7 +438,9 @@ public class BlobsController : DistributionBaseController
     {
         if (!_validationService.IsValidDigest(mount))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid mount digest"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid mount digest")
+            );
         }
 
         // Check if blob exists in source repository
@@ -387,10 +450,10 @@ public class BlobsController : DistributionBaseController
             // Fallback to regular upload
             var sessionId = await _blobRepository.InitiateUploadAsync();
             var location = $"/v2/{name}/blobs/uploads/{sessionId}";
-            
+
             AddDockerHeaders();
             Response.Headers.Add("Location", location);
-            
+
             return Accepted();
         }
 
@@ -406,13 +469,20 @@ public class BlobsController : DistributionBaseController
     {
         if (!_validationService.IsValidDigest(digest))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.DigestInvalid, "Invalid digest format")
+            );
         }
 
         var contentLength = Request.ContentLength ?? 0;
         if (contentLength == 0)
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.SizeInvalid, "Content-Length required for monolithic upload"));
+            return BadRequest(
+                CreateErrorResponse(
+                    OciErrorCodes.SizeInvalid,
+                    "Content-Length required for monolithic upload"
+                )
+            );
         }
 
         // Read and validate content

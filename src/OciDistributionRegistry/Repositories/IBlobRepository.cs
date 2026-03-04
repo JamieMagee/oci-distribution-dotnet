@@ -29,7 +29,12 @@ public interface IBlobRepository
     /// <param name="end">The end position (inclusive)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The blob stream portion, or null if not found</returns>
-    Task<Stream?> GetRangeAsync(string digest, long start, long? end = null, CancellationToken cancellationToken = default);
+    Task<Stream?> GetRangeAsync(
+        string digest,
+        long start,
+        long? end = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Gets the size of a blob.
@@ -71,7 +76,12 @@ public interface IBlobRepository
     /// <param name="contentRange">The content range (optional)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The current upload range</returns>
-    Task<(long Start, long End)> WriteUploadAsync(string sessionId, Stream stream, string? contentRange = null, CancellationToken cancellationToken = default);
+    Task<(long Start, long End)> WriteUploadAsync(
+        string sessionId,
+        Stream stream,
+        string? contentRange = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Completes an upload session.
@@ -81,7 +91,12 @@ public interface IBlobRepository
     /// <param name="stream">Final data stream (optional)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task</returns>
-    Task CompleteUploadAsync(string sessionId, string digest, Stream? stream = null, CancellationToken cancellationToken = default);
+    Task CompleteUploadAsync(
+        string sessionId,
+        string digest,
+        Stream? stream = null,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Gets the status of an upload session.
@@ -89,7 +104,10 @@ public interface IBlobRepository
     /// <param name="sessionId">The upload session ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The current upload range, or null if session not found</returns>
-    Task<(long Start, long End)?> GetUploadStatusAsync(string sessionId, CancellationToken cancellationToken = default);
+    Task<(long Start, long End)?> GetUploadStatusAsync(
+        string sessionId,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Cancels an upload session.

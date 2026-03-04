@@ -44,9 +44,9 @@ public class ErrorHandlingMiddleware
                     new ErrorDetail
                     {
                         Code = OciErrorCodes.NameInvalid,
-                        Message = exception.Message
-                    }
-                }
+                        Message = exception.Message,
+                    },
+                },
             },
             UnauthorizedAccessException => new ErrorResponse
             {
@@ -55,9 +55,9 @@ public class ErrorHandlingMiddleware
                     new ErrorDetail
                     {
                         Code = OciErrorCodes.Unauthorized,
-                        Message = "Authentication required"
-                    }
-                }
+                        Message = "Authentication required",
+                    },
+                },
             },
             FileNotFoundException => new ErrorResponse
             {
@@ -66,9 +66,9 @@ public class ErrorHandlingMiddleware
                     new ErrorDetail
                     {
                         Code = OciErrorCodes.BlobUnknown,
-                        Message = "Content not found"
-                    }
-                }
+                        Message = "Content not found",
+                    },
+                },
             },
             NotSupportedException => new ErrorResponse
             {
@@ -77,9 +77,9 @@ public class ErrorHandlingMiddleware
                     new ErrorDetail
                     {
                         Code = OciErrorCodes.Unsupported,
-                        Message = exception.Message
-                    }
-                }
+                        Message = exception.Message,
+                    },
+                },
             },
             _ => new ErrorResponse
             {
@@ -88,10 +88,10 @@ public class ErrorHandlingMiddleware
                     new ErrorDetail
                     {
                         Code = "UNKNOWN",
-                        Message = "An error occurred processing the request"
-                    }
-                }
-            }
+                        Message = "An error occurred processing the request",
+                    },
+                },
+            },
         };
 
         response.StatusCode = exception switch
@@ -100,7 +100,7 @@ public class ErrorHandlingMiddleware
             UnauthorizedAccessException => 401,
             FileNotFoundException => 404,
             NotSupportedException => 405,
-            _ => 500
+            _ => 500,
         };
 
         var jsonResponse = JsonSerializer.Serialize(errorResponse);

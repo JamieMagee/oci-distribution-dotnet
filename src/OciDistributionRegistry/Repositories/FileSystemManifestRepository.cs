@@ -13,7 +13,10 @@ public class FileSystemManifestRepository : IManifestRepository
     private readonly string _repositoriesPath;
     private readonly ILogger<FileSystemManifestRepository> _logger;
 
-    public FileSystemManifestRepository(IConfiguration configuration, ILogger<FileSystemManifestRepository> logger)
+    public FileSystemManifestRepository(
+        IConfiguration configuration,
+        ILogger<FileSystemManifestRepository> logger
+    )
     {
         _logger = logger;
         var storagePath = configuration.GetValue<string>("Storage:Path") ?? "/tmp/oci-registry";
@@ -21,13 +24,22 @@ public class FileSystemManifestRepository : IManifestRepository
         Directory.CreateDirectory(_repositoriesPath);
     }
 
-    public async Task<bool> ExistsAsync(string repository, string reference, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(
+        string repository,
+        string reference,
+        CancellationToken cancellationToken = default
+    )
     {
         var manifestPath = GetManifestPath(repository, reference);
         return File.Exists(manifestPath);
     }
 
-    public async Task<(byte[] Data, string MediaType, string Digest)?> GetAsync(string repository, string reference, string[]? acceptTypes = null, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Data, string MediaType, string Digest)?> GetAsync(
+        string repository,
+        string reference,
+        string[]? acceptTypes = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var manifestPath = GetManifestPath(repository, reference);
         if (!File.Exists(manifestPath))
@@ -35,29 +47,38 @@ public class FileSystemManifestRepository : IManifestRepository
 
         var data = await File.ReadAllBytesAsync(manifestPath, cancellationToken);
         var digest = ComputeDigest(data);
-        
+
         // Try to read persisted media type from sidecar, fall back to detection
         var mediaTypePath = manifestPath + ".mediatype";
-        var mediaType = File.Exists(mediaTypePath) 
+        var mediaType = File.Exists(mediaTypePath)
             ? (await File.ReadAllTextAsync(mediaTypePath, cancellationToken)).Trim()
             : DetermineMediaType(data);
-        
+
         // Check if the media type is acceptable
         if (acceptTypes != null && acceptTypes.Length > 0 && !acceptTypes.Contains(mediaType))
         {
             // For simplicity, return the first acceptable type if conversion is possible
             // In a real implementation, you might convert between formats
-            if (acceptTypes.Contains(OciMediaTypes.ImageManifest) || acceptTypes.Contains(OciMediaTypes.ImageIndex))
+            if (
+                acceptTypes.Contains(OciMediaTypes.ImageManifest)
+                || acceptTypes.Contains(OciMediaTypes.ImageIndex)
+            )
                 mediaType = acceptTypes.First();
         }
 
         return (data, mediaType, digest);
     }
 
-    public async Task<string> StoreAsync(string repository, string reference, byte[] data, string mediaType, CancellationToken cancellationToken = default)
+    public async Task<string> StoreAsync(
+        string repository,
+        string reference,
+        byte[] data,
+        string mediaType,
+        CancellationToken cancellationToken = default
+    )
     {
         var digest = ComputeDigest(data);
-        
+
         // Store by digest
         var digestPath = GetManifestPath(repository, digest);
         var digestDirectory = Path.GetDirectoryName(digestPath)!;
@@ -73,19 +94,34 @@ public class FileSystemManifestRepository : IManifestRepository
             Directory.CreateDirectory(tagDirectory);
             await File.WriteAllBytesAsync(tagPath, data, cancellationToken);
             await File.WriteAllTextAsync(tagPath + ".mediatype", mediaType, cancellationToken);
-            
+
             // Store tag mapping
             await StoreTagMappingAsync(repository, reference, digest, cancellationToken);
         }
 
         // Handle subject relationships for referrers
-        await HandleSubjectRelationshipAsync(repository, data, digest, mediaType, cancellationToken);
+        await HandleSubjectRelationshipAsync(
+            repository,
+            data,
+            digest,
+            mediaType,
+            cancellationToken
+        );
 
-        _logger.LogInformation("Stored manifest {Reference} in repository {Repository} with digest {Digest}", reference, repository, digest);
+        _logger.LogInformation(
+            "Stored manifest {Reference} in repository {Repository} with digest {Digest}",
+            reference,
+            repository,
+            digest
+        );
         return digest;
     }
 
-    public async Task<bool> DeleteAsync(string repository, string reference, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(
+        string repository,
+        string reference,
+        CancellationToken cancellationToken = default
+    )
     {
         var manifestPath = GetManifestPath(repository, reference);
         if (!File.Exists(manifestPath))
@@ -116,11 +152,20 @@ public class FileSystemManifestRepository : IManifestRepository
         // Clean up referrer relationships
         await CleanupReferrerRelationshipsAsync(repository, digest, cancellationToken);
 
-        _logger.LogInformation("Deleted manifest {Reference} from repository {Repository}", reference, repository);
+        _logger.LogInformation(
+            "Deleted manifest {Reference} from repository {Repository}",
+            reference,
+            repository
+        );
         return true;
     }
 
-    public async Task<(string[] Tags, string? NextTag)> GetTagsAsync(string repository, int? n = null, string? last = null, CancellationToken cancellationToken = default)
+    public async Task<(string[] Tags, string? NextTag)> GetTagsAsync(
+        string repository,
+        int? n = null,
+        string? last = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var tagsPath = GetTagsPath(repository);
         if (!File.Exists(tagsPath))
@@ -143,34 +188,40 @@ public class FileSystemManifestRepository : IManifestRepository
 
         var count = n ?? allTags.Length - startIndex;
         var tags = allTags.Skip(startIndex).Take(count).ToArray();
-        var nextTag = (startIndex + tags.Length < allTags.Length) ? allTags[startIndex + tags.Length] : null;
+        var nextTag =
+            (startIndex + tags.Length < allTags.Length) ? allTags[startIndex + tags.Length] : null;
 
         return (tags, nextTag);
     }
 
-    public async Task<byte[]> GetReferrersAsync(string repository, string digest, string? artifactType = null, CancellationToken cancellationToken = default)
+    public async Task<byte[]> GetReferrersAsync(
+        string repository,
+        string digest,
+        string? artifactType = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var referrersPath = GetReferrersPath(repository, digest);
-        
+
         if (File.Exists(referrersPath))
         {
             var referrersData = await File.ReadAllBytesAsync(referrersPath, cancellationToken);
-            
+
             // Apply artifact type filter if specified
             if (!string.IsNullOrEmpty(artifactType))
             {
                 var index = JsonSerializer.Deserialize<ImageIndex>(referrersData);
                 if (index != null)
                 {
-                    var filteredManifests = index.Manifests
-                        .Where(m => m.ArtifactType == artifactType)
+                    var filteredManifests = index
+                        .Manifests.Where(m => m.ArtifactType == artifactType)
                         .ToArray();
-                    
+
                     index.Manifests = filteredManifests;
                     return JsonSerializer.SerializeToUtf8Bytes(index);
                 }
             }
-            
+
             return referrersData;
         }
 
@@ -179,13 +230,21 @@ public class FileSystemManifestRepository : IManifestRepository
         {
             SchemaVersion = 2,
             MediaType = OciMediaTypes.ImageIndex,
-            Manifests = Array.Empty<Descriptor>()
+            Manifests = Array.Empty<Descriptor>(),
         };
 
         return JsonSerializer.SerializeToUtf8Bytes(emptyIndex);
     }
 
-    public async Task AddReferrerAsync(string repository, string subjectDigest, string referrerDigest, string artifactType, string mediaType, Dictionary<string, string>? annotations = null, CancellationToken cancellationToken = default)
+    public async Task AddReferrerAsync(
+        string repository,
+        string subjectDigest,
+        string referrerDigest,
+        string artifactType,
+        string mediaType,
+        Dictionary<string, string>? annotations = null,
+        CancellationToken cancellationToken = default
+    )
     {
         var referrersPath = GetReferrersPath(repository, subjectDigest);
         var referrersDir = Path.GetDirectoryName(referrersPath)!;
@@ -195,7 +254,9 @@ public class FileSystemManifestRepository : IManifestRepository
         if (File.Exists(referrersPath))
         {
             var existingData = await File.ReadAllBytesAsync(referrersPath, cancellationToken);
-            index = JsonSerializer.Deserialize<ImageIndex>(existingData) ?? new ImageIndex { Manifests = Array.Empty<Descriptor>() };
+            index =
+                JsonSerializer.Deserialize<ImageIndex>(existingData)
+                ?? new ImageIndex { Manifests = Array.Empty<Descriptor>() };
         }
         else
         {
@@ -203,7 +264,7 @@ public class FileSystemManifestRepository : IManifestRepository
             {
                 SchemaVersion = 2,
                 MediaType = OciMediaTypes.ImageIndex,
-                Manifests = Array.Empty<Descriptor>()
+                Manifests = Array.Empty<Descriptor>(),
             };
         }
 
@@ -221,7 +282,7 @@ public class FileSystemManifestRepository : IManifestRepository
             Digest = referrerDigest,
             Size = size,
             ArtifactType = artifactType,
-            Annotations = annotations
+            Annotations = annotations,
         };
 
         var manifestsList = index.Manifests.ToList();
@@ -231,10 +292,20 @@ public class FileSystemManifestRepository : IManifestRepository
         var indexData = JsonSerializer.SerializeToUtf8Bytes(index);
         await File.WriteAllBytesAsync(referrersPath, indexData, cancellationToken);
 
-        _logger.LogDebug("Added referrer {ReferrerDigest} to subject {SubjectDigest} in repository {Repository}", referrerDigest, subjectDigest, repository);
+        _logger.LogDebug(
+            "Added referrer {ReferrerDigest} to subject {SubjectDigest} in repository {Repository}",
+            referrerDigest,
+            subjectDigest,
+            repository
+        );
     }
 
-    public async Task RemoveReferrerAsync(string repository, string subjectDigest, string referrerDigest, CancellationToken cancellationToken = default)
+    public async Task RemoveReferrerAsync(
+        string repository,
+        string subjectDigest,
+        string referrerDigest,
+        CancellationToken cancellationToken = default
+    )
     {
         var referrersPath = GetReferrersPath(repository, subjectDigest);
         if (!File.Exists(referrersPath))
@@ -258,7 +329,12 @@ public class FileSystemManifestRepository : IManifestRepository
             await File.WriteAllBytesAsync(referrersPath, indexData, cancellationToken);
         }
 
-        _logger.LogDebug("Removed referrer {ReferrerDigest} from subject {SubjectDigest} in repository {Repository}", referrerDigest, subjectDigest, repository);
+        _logger.LogDebug(
+            "Removed referrer {ReferrerDigest} from subject {SubjectDigest} in repository {Repository}",
+            referrerDigest,
+            subjectDigest,
+            repository
+        );
     }
 
     private string GetManifestPath(string repository, string reference)
@@ -279,7 +355,12 @@ public class FileSystemManifestRepository : IManifestRepository
         return Path.Combine(repoPath, "referrers", digest);
     }
 
-    private async Task StoreTagMappingAsync(string repository, string tag, string digest, CancellationToken cancellationToken)
+    private async Task StoreTagMappingAsync(
+        string repository,
+        string tag,
+        string digest,
+        CancellationToken cancellationToken
+    )
     {
         var tagsPath = GetTagsPath(repository);
         var tagsDir = Path.GetDirectoryName(tagsPath)!;
@@ -297,21 +378,30 @@ public class FileSystemManifestRepository : IManifestRepository
         await File.WriteAllTextAsync(tagsPath, string.Join('\n', sortedTags), cancellationToken);
     }
 
-    private async Task RemoveTagMappingAsync(string repository, string tag, CancellationToken cancellationToken)
+    private async Task RemoveTagMappingAsync(
+        string repository,
+        string tag,
+        CancellationToken cancellationToken
+    )
     {
         var tagsPath = GetTagsPath(repository);
         if (!File.Exists(tagsPath))
             return;
 
         var content = await File.ReadAllTextAsync(tagsPath, cancellationToken);
-        var tags = content.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+        var tags = content
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Where(t => t != tag)
             .OrderBy(t => t, StringComparer.Ordinal);
 
         await File.WriteAllTextAsync(tagsPath, string.Join('\n', tags), cancellationToken);
     }
 
-    private async Task InvalidateTagsForDigestAsync(string repository, string digest, CancellationToken cancellationToken)
+    private async Task InvalidateTagsForDigestAsync(
+        string repository,
+        string digest,
+        CancellationToken cancellationToken
+    )
     {
         var tagsPath = GetTagsPath(repository);
         if (!File.Exists(tagsPath))
@@ -351,7 +441,13 @@ public class FileSystemManifestRepository : IManifestRepository
         await File.WriteAllTextAsync(tagsPath, string.Join('\n', sorted), cancellationToken);
     }
 
-    private async Task HandleSubjectRelationshipAsync(string repository, byte[] manifestData, string manifestDigest, string mediaType, CancellationToken cancellationToken)
+    private async Task HandleSubjectRelationshipAsync(
+        string repository,
+        byte[] manifestData,
+        string manifestDigest,
+        string mediaType,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -368,7 +464,10 @@ public class FileSystemManifestRepository : IManifestRepository
                     {
                         artifactType = artifactTypeElement.GetString() ?? "";
                     }
-                    else if (mediaType == OciMediaTypes.ImageManifest && doc.RootElement.TryGetProperty("config", out var configElement))
+                    else if (
+                        mediaType == OciMediaTypes.ImageManifest
+                        && doc.RootElement.TryGetProperty("config", out var configElement)
+                    )
                     {
                         artifactType = configElement.GetProperty("mediaType").GetString() ?? "";
                     }
@@ -377,23 +476,41 @@ public class FileSystemManifestRepository : IManifestRepository
                     Dictionary<string, string>? annotations = null;
                     if (doc.RootElement.TryGetProperty("annotations", out var annotationsElement))
                     {
-                        annotations = JsonSerializer.Deserialize<Dictionary<string, string>>(annotationsElement.GetRawText());
+                        annotations = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                            annotationsElement.GetRawText()
+                        );
                     }
 
                     if (string.IsNullOrEmpty(artifactType))
                         artifactType = null!;
 
-                    await AddReferrerAsync(repository, subjectDigest, manifestDigest, artifactType, mediaType, annotations, cancellationToken);
+                    await AddReferrerAsync(
+                        repository,
+                        subjectDigest,
+                        manifestDigest,
+                        artifactType,
+                        mediaType,
+                        annotations,
+                        cancellationToken
+                    );
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to process subject relationship for manifest {Digest}", manifestDigest);
+            _logger.LogWarning(
+                ex,
+                "Failed to process subject relationship for manifest {Digest}",
+                manifestDigest
+            );
         }
     }
 
-    private async Task CleanupReferrerRelationshipsAsync(string repository, string manifestDigest, CancellationToken cancellationToken)
+    private async Task CleanupReferrerRelationshipsAsync(
+        string repository,
+        string manifestDigest,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -406,12 +523,21 @@ public class FileSystemManifestRepository : IManifestRepository
             foreach (var referrersFile in Directory.GetFiles(referrersDir))
             {
                 var subjectDigest = Path.GetFileName(referrersFile);
-                await RemoveReferrerAsync(repository, subjectDigest, manifestDigest, cancellationToken);
+                await RemoveReferrerAsync(
+                    repository,
+                    subjectDigest,
+                    manifestDigest,
+                    cancellationToken
+                );
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to cleanup referrer relationships for manifest {Digest}", manifestDigest);
+            _logger.LogWarning(
+                ex,
+                "Failed to cleanup referrer relationships for manifest {Digest}",
+                manifestDigest
+            );
         }
     }
 

@@ -13,9 +13,9 @@ public class TestData
 {
     // Base64-encoded tar.gz layer (same as Go conformance suite)
     private const string LayerBase64String =
-        "H4sIAAAAAAAAA+3OQQrCMBCF4a49xXgBSUnaHMCTRBptQRNpp6i3t0UEV7oqIv7fYgbmzeJpHHSjVy0" +
-        "WZCa1c/MufWVe94N3RWlrZ72x3k/30nhbFWKWLPU0Dhp6keJ8im//PuU/6pZH2WVtYx8b0Sz7LjWSR5VLG6YRBumSzOlGtjkd+qD" +
-        "jMWiX07Befbs7AAAAAAAAAAAAAAAAAPyzO34MnqoAKAAA";
+        "H4sIAAAAAAAAA+3OQQrCMBCF4a49xXgBSUnaHMCTRBptQRNpp6i3t0UEV7oqIv7fYgbmzeJpHHSjVy0"
+        + "WZCa1c/MufWVe94N3RWlrZ72x3k/30nhbFWKWLPU0Dhp6keJ8im//PuU/6pZH2WVtYx8b0Sz7LjWSR5VLG6YRBumSzOlGtjkd+qD"
+        + "jMWiX07Befbs7AAAAAAAAAAAAAAAAAPyzO34MnqoAKAAA";
 
     public byte[] LayerBlobData { get; }
     public string LayerBlobDigest { get; }
@@ -104,9 +104,12 @@ public class TestData
                 architecture = "amd64",
                 os = "linux",
                 rootfs = new { type = "layers", diff_ids = Array.Empty<string>() },
-                author = $"conformance-test-{i}-{Guid.NewGuid():N}"
+                author = $"conformance-test-{i}-{Guid.NewGuid():N}",
             };
-            var configBytes = JsonSerializer.SerializeToUtf8Bytes(config, new JsonSerializerOptions { WriteIndented = true });
+            var configBytes = JsonSerializer.SerializeToUtf8Bytes(
+                config,
+                new JsonSerializerOptions { WriteIndented = true }
+            );
             Configs[i] = new TestBlob(configBytes, ComputeDigest(configBytes));
         }
 
@@ -122,7 +125,7 @@ public class TestData
                 {
                     MediaType = "application/vnd.oci.image.config.v1+json",
                     Digest = Configs[i].Digest,
-                    Size = Configs[i].Content.Length
+                    Size = Configs[i].Content.Length,
                 },
                 Layers = new[]
                 {
@@ -130,11 +133,14 @@ public class TestData
                     {
                         MediaType = "application/vnd.oci.image.layer.v1.tar+gzip",
                         Digest = LayerBlobDigest,
-                        Size = LayerBlobData.Length
-                    }
-                }
+                        Size = LayerBlobData.Length,
+                    },
+                },
             };
-            var manifestBytes = JsonSerializer.SerializeToUtf8Bytes(manifest, new JsonSerializerOptions { WriteIndented = true });
+            var manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
+                manifest,
+                new JsonSerializerOptions { WriteIndented = true }
+            );
             Manifests[i] = new TestBlob(manifestBytes, ComputeDigest(manifestBytes));
         }
 
@@ -146,11 +152,14 @@ public class TestData
             {
                 MediaType = "application/vnd.oci.image.config.v1+json",
                 Digest = Configs[1].Digest,
-                Size = Configs[1].Content.Length
+                Size = Configs[1].Content.Length,
             },
-            Layers = Array.Empty<DescriptorJson>()
+            Layers = Array.Empty<DescriptorJson>(),
         };
-        EmptyLayerManifestContent = JsonSerializer.SerializeToUtf8Bytes(emptyLayerManifest, new JsonSerializerOptions { WriteIndented = true });
+        EmptyLayerManifestContent = JsonSerializer.SerializeToUtf8Bytes(
+            emptyLayerManifest,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         EmptyLayerManifestDigest = ComputeDigest(EmptyLayerManifestContent);
 
         // TestBlobA — random blob for streamed upload
@@ -174,21 +183,21 @@ public class TestData
         {
             MediaType = "application/vnd.oci.empty.v1+json",
             Size = EmptyJsonBlob.Length,
-            Digest = EmptyJsonBlobDigest
+            Digest = EmptyJsonBlobDigest,
         };
 
         var subjectDescManifest4 = new DescriptorJson
         {
             MediaType = "application/vnd.oci.image.manifest.v1+json",
             Size = Manifests[4].Content.Length,
-            Digest = Manifests[4].Digest
+            Digest = Manifests[4].Digest,
         };
 
         var subjectDescManifest3 = new DescriptorJson
         {
             MediaType = "application/vnd.oci.image.manifest.v1+json",
             Size = Manifests[3].Content.Length,
-            Digest = Manifests[3].Digest
+            Digest = Manifests[3].Digest,
         };
 
         // A: config.MediaType = artifactType
@@ -196,12 +205,20 @@ public class TestData
         {
             SchemaVersion = 2,
             MediaType = "application/vnd.oci.image.manifest.v1+json",
-            Config = new DescriptorJson { MediaType = TestRefArtifactTypeA, Size = TestRefBlobA.Length, Digest = TestRefBlobADigest },
+            Config = new DescriptorJson
+            {
+                MediaType = TestRefArtifactTypeA,
+                Size = TestRefBlobA.Length,
+                Digest = TestRefBlobADigest,
+            },
             Subject = subjectDescManifest4,
             Layers = new[] { emptyJsonDesc },
-            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test config a" }
+            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test config a" },
         };
-        RefsManifestAConfigArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsManifestAConfig, new JsonSerializerOptions { WriteIndented = true });
+        RefsManifestAConfigArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsManifestAConfig,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsManifestAConfigArtifactDigest = ComputeDigest(RefsManifestAConfigArtifactContent);
 
         // B: config.MediaType = artifactType (different type)
@@ -209,12 +226,20 @@ public class TestData
         {
             SchemaVersion = 2,
             MediaType = "application/vnd.oci.image.manifest.v1+json",
-            Config = new DescriptorJson { MediaType = TestRefArtifactTypeB, Size = TestRefBlobB.Length, Digest = TestRefBlobBDigest },
+            Config = new DescriptorJson
+            {
+                MediaType = TestRefArtifactTypeB,
+                Size = TestRefBlobB.Length,
+                Digest = TestRefBlobBDigest,
+            },
             Subject = subjectDescManifest4,
             Layers = new[] { emptyJsonDesc },
-            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test config b" }
+            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test config b" },
         };
-        RefsManifestBConfigArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsManifestBConfig, new JsonSerializerOptions { WriteIndented = true });
+        RefsManifestBConfigArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsManifestBConfig,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsManifestBConfigArtifactDigest = ComputeDigest(RefsManifestBConfigArtifactContent);
 
         // A: ArtifactType field, config = emptyJSON
@@ -225,10 +250,21 @@ public class TestData
             ArtifactType = TestRefArtifactTypeA,
             Config = emptyJsonDesc,
             Subject = subjectDescManifest4,
-            Layers = new[] { new DescriptorJson { MediaType = TestRefArtifactTypeA, Size = TestRefBlobA.Length, Digest = TestRefBlobADigest } },
-            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test layer a" }
+            Layers = new[]
+            {
+                new DescriptorJson
+                {
+                    MediaType = TestRefArtifactTypeA,
+                    Size = TestRefBlobA.Length,
+                    Digest = TestRefBlobADigest,
+                },
+            },
+            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test layer a" },
         };
-        RefsManifestALayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsManifestALayer, new JsonSerializerOptions { WriteIndented = true });
+        RefsManifestALayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsManifestALayer,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsManifestALayerArtifactDigest = ComputeDigest(RefsManifestALayerArtifactContent);
 
         // B: ArtifactType field, config = emptyJSON (different type)
@@ -239,10 +275,21 @@ public class TestData
             ArtifactType = TestRefArtifactTypeB,
             Config = emptyJsonDesc,
             Subject = subjectDescManifest4,
-            Layers = new[] { new DescriptorJson { MediaType = TestRefArtifactTypeB, Size = TestRefBlobB.Length, Digest = TestRefBlobBDigest } },
-            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test layer b" }
+            Layers = new[]
+            {
+                new DescriptorJson
+                {
+                    MediaType = TestRefArtifactTypeB,
+                    Size = TestRefBlobB.Length,
+                    Digest = TestRefBlobBDigest,
+                },
+            },
+            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test layer b" },
         };
-        RefsManifestBLayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsManifestBLayer, new JsonSerializerOptions { WriteIndented = true });
+        RefsManifestBLayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsManifestBLayer,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsManifestBLayerArtifactDigest = ComputeDigest(RefsManifestBLayerArtifactContent);
 
         // C: Same as B but subject = manifests[3] (non-existent subject)
@@ -253,9 +300,20 @@ public class TestData
             ArtifactType = TestRefArtifactTypeB,
             Config = emptyJsonDesc,
             Subject = subjectDescManifest3,
-            Layers = new[] { new DescriptorJson { MediaType = TestRefArtifactTypeB, Size = TestRefBlobB.Length, Digest = TestRefBlobBDigest } }
+            Layers = new[]
+            {
+                new DescriptorJson
+                {
+                    MediaType = TestRefArtifactTypeB,
+                    Size = TestRefBlobB.Length,
+                    Digest = TestRefBlobBDigest,
+                },
+            },
         };
-        RefsManifestCLayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsManifestCLayer, new JsonSerializerOptions { WriteIndented = true });
+        RefsManifestCLayerArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsManifestCLayer,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsManifestCLayerArtifactDigest = ComputeDigest(RefsManifestCLayerArtifactContent);
 
         // Image index artifact
@@ -266,13 +324,26 @@ public class TestData
             ArtifactType = TestRefArtifactTypeIndex,
             Manifests = new[]
             {
-                new DescriptorJson { MediaType = "application/vnd.oci.image.manifest.v1+json", Size = RefsManifestAConfigArtifactContent.Length, Digest = RefsManifestAConfigArtifactDigest },
-                new DescriptorJson { MediaType = "application/vnd.oci.image.manifest.v1+json", Size = RefsManifestALayerArtifactContent.Length, Digest = RefsManifestALayerArtifactDigest }
+                new DescriptorJson
+                {
+                    MediaType = "application/vnd.oci.image.manifest.v1+json",
+                    Size = RefsManifestAConfigArtifactContent.Length,
+                    Digest = RefsManifestAConfigArtifactDigest,
+                },
+                new DescriptorJson
+                {
+                    MediaType = "application/vnd.oci.image.manifest.v1+json",
+                    Size = RefsManifestALayerArtifactContent.Length,
+                    Digest = RefsManifestALayerArtifactDigest,
+                },
             },
             Subject = subjectDescManifest4,
-            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test index" }
+            Annotations = new Dictionary<string, string> { [TestAnnotationKey] = "test index" },
         };
-        RefsIndexArtifactContent = JsonSerializer.SerializeToUtf8Bytes(refsIndexArtifact, new JsonSerializerOptions { WriteIndented = true });
+        RefsIndexArtifactContent = JsonSerializer.SerializeToUtf8Bytes(
+            refsIndexArtifact,
+            new JsonSerializerOptions { WriteIndented = true }
+        );
         RefsIndexArtifactDigest = ComputeDigest(RefsIndexArtifactContent);
     }
 
@@ -293,10 +364,17 @@ public class TestData
     /// Helper to push a blob via POST (initiate) → PUT (complete) to the given client.
     /// Returns the blob location.
     /// </summary>
-    public static async Task<string> PushBlobAsync(HttpClient client, string name, byte[] data, string digest)
+    public static async Task<string> PushBlobAsync(
+        HttpClient client,
+        string name,
+        byte[] data,
+        string digest
+    )
     {
         // Check if blob already exists
-        var headResp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"/v2/{name}/blobs/{digest}"));
+        var headResp = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, $"/v2/{name}/blobs/{digest}")
+        );
         if (headResp.StatusCode == System.Net.HttpStatusCode.OK)
         {
             return $"/v2/{name}/blobs/{digest}";
@@ -305,14 +383,16 @@ public class TestData
         // POST to initiate
         var postResp = await client.PostAsync($"/v2/{name}/blobs/uploads/", null);
         postResp.EnsureSuccessStatusCode();
-        var location = postResp.Headers.Location?.ToString()
-            ?? postResp.Headers.GetValues("Location").First();
+        var location =
+            postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
 
         // PUT to complete
         var separator = location.Contains('?') ? "&" : "?";
         var putUrl = $"{location}{separator}digest={Uri.EscapeDataString(digest)}";
         var putContent = new ByteArrayContent(data);
-        putContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        putContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+            "application/octet-stream"
+        );
         putContent.Headers.ContentLength = data.Length;
         var putResp = await client.PutAsync(putUrl, putContent);
         putResp.EnsureSuccessStatusCode();
@@ -324,10 +404,18 @@ public class TestData
     /// <summary>
     /// Helper to push a manifest via PUT.
     /// </summary>
-    public static async Task<HttpResponseMessage> PushManifestAsync(HttpClient client, string name, string reference, byte[] content, string mediaType)
+    public static async Task<HttpResponseMessage> PushManifestAsync(
+        HttpClient client,
+        string name,
+        string reference,
+        byte[] content,
+        string mediaType
+    )
     {
         var putContent = new ByteArrayContent(content);
-        putContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType);
+        putContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+            mediaType
+        );
         return await client.PutAsync($"/v2/{name}/manifests/{reference}", putContent);
     }
 }
@@ -341,31 +429,71 @@ public record TestBlob(byte[] Content, string Digest)
 
 internal class ManifestJson
 {
-    [JsonPropertyName("schemaVersion")] public int SchemaVersion { get; set; }
-    [JsonPropertyName("mediaType")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MediaType { get; set; }
-    [JsonPropertyName("artifactType")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ArtifactType { get; set; }
-    [JsonPropertyName("config")] public required DescriptorJson Config { get; set; }
-    [JsonPropertyName("layers")] public required DescriptorJson[] Layers { get; set; }
-    [JsonPropertyName("subject")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DescriptorJson? Subject { get; set; }
-    [JsonPropertyName("annotations")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Annotations { get; set; }
+    [JsonPropertyName("schemaVersion")]
+    public int SchemaVersion { get; set; }
+
+    [JsonPropertyName("mediaType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MediaType { get; set; }
+
+    [JsonPropertyName("artifactType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ArtifactType { get; set; }
+
+    [JsonPropertyName("config")]
+    public required DescriptorJson Config { get; set; }
+
+    [JsonPropertyName("layers")]
+    public required DescriptorJson[] Layers { get; set; }
+
+    [JsonPropertyName("subject")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DescriptorJson? Subject { get; set; }
+
+    [JsonPropertyName("annotations")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Annotations { get; set; }
 }
 
 internal class IndexJson
 {
-    [JsonPropertyName("schemaVersion")] public int SchemaVersion { get; set; }
-    [JsonPropertyName("mediaType")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MediaType { get; set; }
-    [JsonPropertyName("artifactType")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ArtifactType { get; set; }
-    [JsonPropertyName("manifests")] public required DescriptorJson[] Manifests { get; set; }
-    [JsonPropertyName("subject")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public DescriptorJson? Subject { get; set; }
-    [JsonPropertyName("annotations")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Annotations { get; set; }
+    [JsonPropertyName("schemaVersion")]
+    public int SchemaVersion { get; set; }
+
+    [JsonPropertyName("mediaType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MediaType { get; set; }
+
+    [JsonPropertyName("artifactType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ArtifactType { get; set; }
+
+    [JsonPropertyName("manifests")]
+    public required DescriptorJson[] Manifests { get; set; }
+
+    [JsonPropertyName("subject")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DescriptorJson? Subject { get; set; }
+
+    [JsonPropertyName("annotations")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Annotations { get; set; }
 }
 
 internal class DescriptorJson
 {
-    [JsonPropertyName("mediaType")] public required string MediaType { get; set; }
-    [JsonPropertyName("digest")] public required string Digest { get; set; }
-    [JsonPropertyName("size")] public long Size { get; set; }
-    [JsonPropertyName("annotations")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Annotations { get; set; }
+    [JsonPropertyName("mediaType")]
+    public required string MediaType { get; set; }
+
+    [JsonPropertyName("digest")]
+    public required string Digest { get; set; }
+
+    [JsonPropertyName("size")]
+    public long Size { get; set; }
+
+    [JsonPropertyName("annotations")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Annotations { get; set; }
 }
 
 #endregion

@@ -11,9 +11,10 @@ namespace OciDistributionRegistry.Controllers;
 [Produces("application/json")]
 public class DistributionBaseController : ControllerBase
 {
-    private static readonly System.Text.RegularExpressions.Regex RepositoryNameRegex =
-        new(@"^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*$",
-            System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex RepositoryNameRegex = new(
+        @"^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*$",
+        System.Text.RegularExpressions.RegexOptions.Compiled
+    );
 
     protected readonly ILogger<DistributionBaseController> Logger;
 
@@ -36,10 +37,10 @@ public class DistributionBaseController : ControllerBase
     public IActionResult CheckApiVersion()
     {
         Logger.LogDebug("API version check requested");
-        
+
         // Add Docker compatibility headers
         Response.Headers.Add("Docker-Distribution-API-Version", "registry/2.0");
-        
+
         return Ok();
     }
 
@@ -50,7 +51,11 @@ public class DistributionBaseController : ControllerBase
     /// <param name="message">The error message</param>
     /// <param name="detail">Additional error details</param>
     /// <returns>Error response</returns>
-    protected ErrorResponse CreateErrorResponse(string errorCode, string? message = null, object? detail = null)
+    protected ErrorResponse CreateErrorResponse(
+        string errorCode,
+        string? message = null,
+        object? detail = null
+    )
     {
         return new ErrorResponse
         {
@@ -60,9 +65,9 @@ public class DistributionBaseController : ControllerBase
                 {
                     Code = errorCode,
                     Message = message,
-                    Detail = detail
-                }
-            }
+                    Detail = detail,
+                },
+            },
         };
     }
 
@@ -75,17 +80,26 @@ public class DistributionBaseController : ControllerBase
     {
         if (string.IsNullOrEmpty(name))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name cannot be empty"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name cannot be empty")
+            );
         }
 
         if (!RepositoryNameRegex.IsMatch(name))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name does not match required format"));
+            return BadRequest(
+                CreateErrorResponse(
+                    OciErrorCodes.NameInvalid,
+                    "Repository name does not match required format"
+                )
+            );
         }
 
         if (name.Length > 255)
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name too long"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Repository name too long")
+            );
         }
 
         return null;

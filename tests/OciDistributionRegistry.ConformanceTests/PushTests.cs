@@ -6,7 +6,7 @@ using Xunit;
 namespace OciDistributionRegistry.ConformanceTests;
 
 [Collection("Conformance")]
-[TestCaseOrderer("OciDistributionRegistry.ConformanceTests.Helpers.AlphabeticalOrderer", "OciDistributionRegistry.ConformanceTests")]
+[TestCaseOrderer(typeof(AlphabeticalOrderer))]
 public class PushTests
 {
     private readonly RegistryFixture _fixture;
@@ -30,32 +30,39 @@ public class PushTests
         // POST to initiate upload session
         var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
         postResp.EnsureSuccessStatusCode();
-        var location = postResp.Headers.Location?.ToString()
-            ?? postResp.Headers.GetValues("Location").First();
+        var location =
+            postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
 
         // PATCH with testBlobA body
         var request = new HttpRequestMessage(HttpMethod.Patch, location);
         request.Content = new ByteArrayContent(_data.TestBlobA);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         request.Content.Headers.ContentLength = _data.TestBlobA.Length;
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", $"0-{_data.TestBlobA.Length - 1}");
+        request.Content.Headers.TryAddWithoutValidation(
+            "Content-Range",
+            $"0-{_data.TestBlobA.Length - 1}"
+        );
 
         var patchResp = await _client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Accepted, patchResp.StatusCode);
 
-        _fixture.State["push_streamedUploadLocation"] = patchResp.Headers.Location?.ToString()
+        _fixture.State["push_streamedUploadLocation"] =
+            patchResp.Headers.Location?.ToString()
             ?? patchResp.Headers.GetValues("Location").First();
     }
 
     [Fact]
     public async Task A2_StreamedUpload_PutWithDigest_Returns201()
     {
-        var streamedUploadLocation = _fixture.State.GetValueOrDefault("push_streamedUploadLocation");
+        var streamedUploadLocation = _fixture.State.GetValueOrDefault(
+            "push_streamedUploadLocation"
+        );
         Assert.NotEmpty(streamedUploadLocation);
 
         var separator = streamedUploadLocation!.Contains('?') ? "&" : "?";
-        var putUrl = $"{streamedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobADigest)}";
+        var putUrl =
+            $"{streamedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobADigest)}";
 
         var putResp = await _client.PutAsync(putUrl, null);
 
@@ -86,11 +93,13 @@ public class PushTests
 
         var resp = await _client.PostAsync(
             $"/v2/{_namespace}/blobs/uploads/?digest={Uri.EscapeDataString(configBlob.Digest)}",
-            content);
+            content
+        );
 
         Assert.True(
             resp.StatusCode == HttpStatusCode.Created || resp.StatusCode == HttpStatusCode.Accepted,
-            $"Expected 201 or 202 but got {(int)resp.StatusCode}");
+            $"Expected 201 or 202 but got {(int)resp.StatusCode}"
+        );
     }
 
     [Fact]
@@ -101,8 +110,8 @@ public class PushTests
         // POST to initiate
         var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
         postResp.EnsureSuccessStatusCode();
-        var location = postResp.Headers.Location?.ToString()
-            ?? postResp.Headers.GetValues("Location").First();
+        var location =
+            postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
 
         // PUT to complete
         var separator = location.Contains('?') ? "&" : "?";
@@ -128,7 +137,12 @@ public class PushTests
     [Fact]
     public async Task B5_PutLayerBlob_Returns201()
     {
-        await TestData.PushBlobAsync(_client, _namespace, _data.LayerBlobData, _data.LayerBlobDigest);
+        await TestData.PushBlobAsync(
+            _client,
+            _namespace,
+            _data.LayerBlobData,
+            _data.LayerBlobDigest
+        );
     }
 
     [Fact]
@@ -149,15 +163,18 @@ public class PushTests
         // POST to initiate
         var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
         postResp.EnsureSuccessStatusCode();
-        var location = postResp.Headers.Location?.ToString()
-            ?? postResp.Headers.GetValues("Location").First();
+        var location =
+            postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
 
         // PATCH with chunk2 (out of order)
         var request = new HttpRequestMessage(HttpMethod.Patch, location);
         request.Content = new ByteArrayContent(_data.TestBlobBChunk2);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         request.Content.Headers.ContentLength = _data.TestBlobBChunk2.Length;
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", _data.TestBlobBChunk2Range);
+        request.Content.Headers.TryAddWithoutValidation(
+            "Content-Range",
+            _data.TestBlobBChunk2Range
+        );
 
         var patchResp = await _client.SendAsync(request);
 
@@ -170,15 +187,18 @@ public class PushTests
         // POST to initiate
         var postResp = await _client.PostAsync($"/v2/{_namespace}/blobs/uploads/", null);
         postResp.EnsureSuccessStatusCode();
-        var location = postResp.Headers.Location?.ToString()
-            ?? postResp.Headers.GetValues("Location").First();
+        var location =
+            postResp.Headers.Location?.ToString() ?? postResp.Headers.GetValues("Location").First();
 
         // PATCH with chunk1
         var request = new HttpRequestMessage(HttpMethod.Patch, location);
         request.Content = new ByteArrayContent(_data.TestBlobBChunk1);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         request.Content.Headers.ContentLength = _data.TestBlobBChunk1.Length;
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", _data.TestBlobBChunk1Range);
+        request.Content.Headers.TryAddWithoutValidation(
+            "Content-Range",
+            _data.TestBlobBChunk1Range
+        );
 
         var patchResp = await _client.SendAsync(request);
 
@@ -188,7 +208,8 @@ public class PushTests
         Assert.True(patchResp.Headers.TryGetValues("Range", out var rangeValues));
         Assert.NotEmpty(rangeValues!);
 
-        _fixture.State["push_chunkedUploadLocation"] = patchResp.Headers.Location?.ToString()
+        _fixture.State["push_chunkedUploadLocation"] =
+            patchResp.Headers.Location?.ToString()
             ?? patchResp.Headers.GetValues("Location").First();
     }
 
@@ -203,7 +224,10 @@ public class PushTests
         request.Content = new ByteArrayContent(_data.TestBlobBChunk1);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         request.Content.Headers.ContentLength = _data.TestBlobBChunk1.Length;
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", _data.TestBlobBChunk1Range);
+        request.Content.Headers.TryAddWithoutValidation(
+            "Content-Range",
+            _data.TestBlobBChunk1Range
+        );
 
         var patchResp = await _client.SendAsync(request);
 
@@ -239,14 +263,18 @@ public class PushTests
         request.Content = new ByteArrayContent(_data.TestBlobBChunk2);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         request.Content.Headers.ContentLength = _data.TestBlobBChunk2.Length;
-        request.Content.Headers.TryAddWithoutValidation("Content-Range", _data.TestBlobBChunk2Range);
+        request.Content.Headers.TryAddWithoutValidation(
+            "Content-Range",
+            _data.TestBlobBChunk2Range
+        );
 
         var patchResp = await _client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Accepted, patchResp.StatusCode);
 
         // Update location for the final PUT
-        _fixture.State["push_chunkedUploadLocation"] = patchResp.Headers.Location?.ToString()
+        _fixture.State["push_chunkedUploadLocation"] =
+            patchResp.Headers.Location?.ToString()
             ?? patchResp.Headers.GetValues("Location").First();
     }
 
@@ -257,7 +285,8 @@ public class PushTests
         Assert.NotEmpty(chunkedUploadLocation);
 
         var separator = chunkedUploadLocation!.Contains('?') ? "&" : "?";
-        var putUrl = $"{chunkedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobBDigest)}";
+        var putUrl =
+            $"{chunkedUploadLocation}{separator}digest={Uri.EscapeDataString(_data.TestBlobBDigest)}";
 
         var putResp = await _client.PutAsync(putUrl, null);
 
@@ -273,7 +302,8 @@ public class PushTests
     {
         var resp = await _client.PostAsync(
             $"/v2/{_crossmountNamespace}/blobs/uploads/?mount={Uri.EscapeDataString(_data.DummyDigest)}",
-            null);
+            null
+        );
 
         Assert.Equal(HttpStatusCode.Accepted, resp.StatusCode);
     }
@@ -283,11 +313,13 @@ public class PushTests
     {
         var resp = await _client.PostAsync(
             $"/v2/{_crossmountNamespace}/blobs/uploads/?mount={Uri.EscapeDataString(_data.TestBlobADigest)}&from={Uri.EscapeDataString(_namespace)}",
-            null);
+            null
+        );
 
         Assert.True(
             resp.StatusCode == HttpStatusCode.Created || resp.StatusCode == HttpStatusCode.Accepted,
-            $"Expected 201 or 202 but got {(int)resp.StatusCode}");
+            $"Expected 201 or 202 but got {(int)resp.StatusCode}"
+        );
     }
 
     #endregion
@@ -297,11 +329,15 @@ public class PushTests
     [Fact]
     public async Task E1_GetNonexistentManifest_Returns404()
     {
-        var resp = await _client.GetAsync($"/v2/{_namespace}/manifests/{_data.NonexistentManifest}");
+        var resp = await _client.GetAsync(
+            $"/v2/{_namespace}/manifests/{_data.NonexistentManifest}"
+        );
 
         Assert.True(
-            resp.StatusCode == HttpStatusCode.NotFound || resp.StatusCode == HttpStatusCode.BadRequest,
-            $"Expected 404 or 400 but got {(int)resp.StatusCode}");
+            resp.StatusCode == HttpStatusCode.NotFound
+                || resp.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400 but got {(int)resp.StatusCode}"
+        );
     }
 
     [Fact]
@@ -317,7 +353,8 @@ public class PushTests
                 _namespace,
                 tag,
                 manifest.Content,
-                "application/vnd.oci.image.manifest.v1+json");
+                "application/vnd.oci.image.manifest.v1+json"
+            );
 
             Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         }
@@ -331,12 +368,14 @@ public class PushTests
             _namespace,
             _data.EmptyLayerManifestDigest,
             _data.EmptyLayerManifestContent,
-            "application/vnd.oci.image.manifest.v1+json");
+            "application/vnd.oci.image.manifest.v1+json"
+        );
 
         // Accept 201 primarily, but also accept other success codes
         Assert.True(
             resp.IsSuccessStatusCode,
-            $"Expected success status code but got {(int)resp.StatusCode}");
+            $"Expected success status code but got {(int)resp.StatusCode}"
+        );
     }
 
     [Fact]

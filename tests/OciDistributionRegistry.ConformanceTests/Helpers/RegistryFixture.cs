@@ -25,22 +25,21 @@ public class RegistryFixture : IDisposable
         StoragePath = Path.Combine(Path.GetTempPath(), $"oci-conformance-{Guid.NewGuid():N}");
         Directory.CreateDirectory(StoragePath);
 
-        Factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureAppConfiguration((context, config) =>
-                {
-                    config.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["Storage:Path"] = StoragePath
-                    });
-                });
-            });
-
-        Client = Factory.CreateClient(new WebApplicationFactoryClientOptions
+        Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
-            AllowAutoRedirect = false
+            builder.ConfigureAppConfiguration(
+                (context, config) =>
+                {
+                    config.AddInMemoryCollection(
+                        new Dictionary<string, string?> { ["Storage:Path"] = StoragePath }
+                    );
+                }
+            );
         });
+
+        Client = Factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
 
         Data = new TestData();
     }
@@ -54,7 +53,9 @@ public class RegistryFixture : IDisposable
             if (Directory.Exists(StoragePath))
                 Directory.Delete(StoragePath, recursive: true);
         }
-        catch { /* best effort cleanup */ }
+        catch
+        { /* best effort cleanup */
+        }
     }
 }
 
@@ -62,6 +63,4 @@ public class RegistryFixture : IDisposable
 /// Collection definition so all test classes share the same RegistryFixture instance.
 /// </summary>
 [CollectionDefinition("Conformance")]
-public class ConformanceCollection : ICollectionFixture<RegistryFixture>
-{
-}
+public class ConformanceCollection : ICollectionFixture<RegistryFixture> { }

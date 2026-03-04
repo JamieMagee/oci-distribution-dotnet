@@ -28,14 +28,23 @@ public class DockerCompatibilityMiddleware
         if (context.Request.Method == "OPTIONS")
         {
             context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, HEAD, PATCH, OPTIONS");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "Authorization, Content-Type, Content-Length, Content-Range, Docker-Content-Digest, Accept");
+            context.Response.Headers.Add(
+                "Access-Control-Allow-Methods",
+                "GET, POST, PUT, DELETE, HEAD, PATCH, OPTIONS"
+            );
+            context.Response.Headers.Add(
+                "Access-Control-Allow-Headers",
+                "Authorization, Content-Type, Content-Length, Content-Range, Docker-Content-Digest, Accept"
+            );
             context.Response.StatusCode = 200;
             return;
         }
 
         context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-        context.Response.Headers.Add("Access-Control-Expose-Headers", "Docker-Content-Digest, Location, Range, Content-Length, OCI-Subject, OCI-Filters-Applied");
+        context.Response.Headers.Add(
+            "Access-Control-Expose-Headers",
+            "Docker-Content-Digest, Location, Range, Content-Length, OCI-Subject, OCI-Filters-Applied"
+        );
 
         await _next(context);
     }

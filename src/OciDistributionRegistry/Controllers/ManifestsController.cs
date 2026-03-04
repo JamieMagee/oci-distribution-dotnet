@@ -18,7 +18,9 @@ public class ManifestsController : DistributionBaseController
     public ManifestsController(
         IManifestRepository manifestRepository,
         IValidationService validationService,
-        ILogger<ManifestsController> logger) : base(logger)
+        ILogger<ManifestsController> logger
+    )
+        : base(logger)
     {
         _manifestRepository = manifestRepository;
         _validationService = validationService;
@@ -38,14 +40,21 @@ public class ManifestsController : DistributionBaseController
     public async Task<IActionResult> GetManifest(string name, string reference)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!IsValidReference(reference))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format")
+            );
         }
 
-        Logger.LogDebug("Getting manifest {Reference} from repository {Repository}", reference, name);
+        Logger.LogDebug(
+            "Getting manifest {Reference} from repository {Repository}",
+            reference,
+            name
+        );
 
         // Get accepted media types from Accept header
         var acceptHeader = Request.Headers["Accept"].ToString();
@@ -54,7 +63,9 @@ public class ManifestsController : DistributionBaseController
         var result = await _manifestRepository.GetAsync(name, reference, acceptTypes);
         if (result == null)
         {
-            return NotFound(CreateErrorResponse(OciErrorCodes.ManifestUnknown, "Manifest not found"));
+            return NotFound(
+                CreateErrorResponse(OciErrorCodes.ManifestUnknown, "Manifest not found")
+            );
         }
 
         var (data, mediaType, digest) = result.Value;
@@ -80,14 +91,21 @@ public class ManifestsController : DistributionBaseController
     public async Task<IActionResult> HeadManifest(string name, string reference)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!IsValidReference(reference))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format")
+            );
         }
 
-        Logger.LogDebug("Checking manifest {Reference} in repository {Repository}", reference, name);
+        Logger.LogDebug(
+            "Checking manifest {Reference} in repository {Repository}",
+            reference,
+            name
+        );
 
         var acceptHeader = Request.Headers["Accept"].ToString();
         var acceptTypes = ParseAcceptHeader(acceptHeader);
@@ -123,11 +141,14 @@ public class ManifestsController : DistributionBaseController
     public async Task<IActionResult> PutManifest(string name, string reference)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!IsValidReference(reference))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format")
+            );
         }
 
         var contentType = Request.ContentType ?? "";
@@ -137,10 +158,17 @@ public class ManifestsController : DistributionBaseController
         const int maxManifestSize = 4 * 1024 * 1024;
         if (contentLength > maxManifestSize)
         {
-            return StatusCode(413, CreateErrorResponse(OciErrorCodes.ManifestInvalid, "Manifest too large"));
+            return StatusCode(
+                413,
+                CreateErrorResponse(OciErrorCodes.ManifestInvalid, "Manifest too large")
+            );
         }
 
-        Logger.LogInformation("Storing manifest {Reference} in repository {Repository}", reference, name);
+        Logger.LogInformation(
+            "Storing manifest {Reference} in repository {Repository}",
+            reference,
+            name
+        );
 
         // Read manifest data
         using var memoryStream = new MemoryStream();
@@ -151,20 +179,35 @@ public class ManifestsController : DistributionBaseController
         var validation = await _validationService.ValidateManifestAsync(manifestData, contentType);
         if (!validation.IsValid)
         {
-            return BadRequest(CreateErrorResponse(validation.ErrorCode ?? OciErrorCodes.ManifestInvalid, validation.ErrorMessage));
+            return BadRequest(
+                CreateErrorResponse(
+                    validation.ErrorCode ?? OciErrorCodes.ManifestInvalid,
+                    validation.ErrorMessage
+                )
+            );
         }
 
         // Compute digest and validate if reference is a digest
         var computedDigest = _validationService.ComputeDigest(manifestData);
         if (_validationService.IsValidDigest(reference) && reference != computedDigest)
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.DigestInvalid, "Reference digest does not match content"));
+            return BadRequest(
+                CreateErrorResponse(
+                    OciErrorCodes.DigestInvalid,
+                    "Reference digest does not match content"
+                )
+            );
         }
 
         try
         {
-            var digest = await _manifestRepository.StoreAsync(name, reference, manifestData, contentType);
-            
+            var digest = await _manifestRepository.StoreAsync(
+                name,
+                reference,
+                manifestData,
+                contentType
+            );
+
             var location = $"/v2/{name}/manifests/{digest}";
             AddDockerHeaders(digest);
             Response.Headers.Add("Location", location);
@@ -180,8 +223,16 @@ public class ManifestsController : DistributionBaseController
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to store manifest {Reference} in repository {Repository}", reference, name);
-            return StatusCode(500, CreateErrorResponse(OciErrorCodes.ManifestInvalid, "Failed to store manifest"));
+            Logger.LogError(
+                ex,
+                "Failed to store manifest {Reference} in repository {Repository}",
+                reference,
+                name
+            );
+            return StatusCode(
+                500,
+                CreateErrorResponse(OciErrorCodes.ManifestInvalid, "Failed to store manifest")
+            );
         }
     }
 
@@ -201,19 +252,28 @@ public class ManifestsController : DistributionBaseController
     public async Task<IActionResult> DeleteManifest(string name, string reference)
     {
         var repoValidation = ValidateRepositoryName(name);
-        if (repoValidation != null) return repoValidation;
+        if (repoValidation != null)
+            return repoValidation;
 
         if (!IsValidReference(reference))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format"));
+            return BadRequest(
+                CreateErrorResponse(OciErrorCodes.NameInvalid, "Invalid reference format")
+            );
         }
 
-        Logger.LogInformation("Deleting manifest {Reference} from repository {Repository}", reference, name);
+        Logger.LogInformation(
+            "Deleting manifest {Reference} from repository {Repository}",
+            reference,
+            name
+        );
 
         var deleted = await _manifestRepository.DeleteAsync(name, reference);
         if (!deleted)
         {
-            return NotFound(CreateErrorResponse(OciErrorCodes.ManifestUnknown, "Manifest not found"));
+            return NotFound(
+                CreateErrorResponse(OciErrorCodes.ManifestUnknown, "Manifest not found")
+            );
         }
 
         AddDockerHeaders();
@@ -250,8 +310,10 @@ public class ManifestsController : DistributionBaseController
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(manifestData);
-            if (doc.RootElement.TryGetProperty("subject", out var subjectElement) &&
-                subjectElement.TryGetProperty("digest", out var digestElement))
+            if (
+                doc.RootElement.TryGetProperty("subject", out var subjectElement)
+                && subjectElement.TryGetProperty("digest", out var digestElement)
+            )
             {
                 return digestElement.GetString();
             }

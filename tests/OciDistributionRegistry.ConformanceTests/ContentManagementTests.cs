@@ -10,7 +10,7 @@ namespace OciDistributionRegistry.ConformanceTests;
 /// Tests content management (delete) operations for manifests and blobs.
 /// </summary>
 [Collection("Conformance")]
-[TestCaseOrderer("OciDistributionRegistry.ConformanceTests.Helpers.AlphabeticalOrderer", "OciDistributionRegistry.ConformanceTests")]
+[TestCaseOrderer(typeof(AlphabeticalOrderer))]
 public class ContentManagementTests
 {
     private readonly RegistryFixture _fixture;
@@ -32,16 +32,24 @@ public class ContentManagementTests
         var name = RegistryFixture.Namespace;
 
         // Push config blob
-        await TestData.PushBlobAsync(_client, name, _data.Configs[3].Content, _data.Configs[3].Digest);
+        await TestData.PushBlobAsync(
+            _client,
+            name,
+            _data.Configs[3].Content,
+            _data.Configs[3].Digest
+        );
 
         // Push layer blob
         await TestData.PushBlobAsync(_client, name, _data.LayerBlobData, _data.LayerBlobDigest);
 
         // Push manifest with tag
         var resp = await TestData.PushManifestAsync(
-            _client, name, "tagtest0",
+            _client,
+            name,
+            "tagtest0",
             _data.Manifests[3].Content,
-            "application/vnd.oci.image.manifest.v1+json");
+            "application/vnd.oci.image.manifest.v1+json"
+        );
         resp.EnsureSuccessStatusCode();
 
         // Record initial tag count
@@ -63,13 +71,16 @@ public class ContentManagementTests
         var name = RegistryFixture.Namespace;
         var resp = await _client.DeleteAsync($"/v2/{name}/manifests/tagtest0");
 
-        Assert.Contains(resp.StatusCode, new[]
-        {
-            HttpStatusCode.Accepted,
-            HttpStatusCode.BadRequest,
-            HttpStatusCode.MethodNotAllowed,
-            HttpStatusCode.NotFound
-        });
+        Assert.Contains(
+            resp.StatusCode,
+            new[]
+            {
+                HttpStatusCode.Accepted,
+                HttpStatusCode.BadRequest,
+                HttpStatusCode.MethodNotAllowed,
+                HttpStatusCode.NotFound,
+            }
+        );
     }
 
     [Fact]
@@ -80,12 +91,15 @@ public class ContentManagementTests
         var resp = await _client.DeleteAsync($"/v2/{name}/manifests/{digest}");
 
         // 202 if deleted, 404 if already removed by tag delete
-        Assert.Contains(resp.StatusCode, new[]
-        {
-            HttpStatusCode.Accepted,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.MethodNotAllowed
-        });
+        Assert.Contains(
+            resp.StatusCode,
+            new[]
+            {
+                HttpStatusCode.Accepted,
+                HttpStatusCode.NotFound,
+                HttpStatusCode.MethodNotAllowed,
+            }
+        );
 
         if (resp.StatusCode == HttpStatusCode.MethodNotAllowed)
         {
@@ -123,14 +137,17 @@ public class ContentManagementTests
         var tags = doc.RootElement.GetProperty("tags");
         var currentCount = tags.GetArrayLength();
 
-        var manifestDeleteAllowed = _fixture.State.GetValueOrDefault("mgmt_manifestDeleteAllowed") != "false";
+        var manifestDeleteAllowed =
+            _fixture.State.GetValueOrDefault("mgmt_manifestDeleteAllowed") != "false";
         var initialTagCountStr = _fixture.State.GetValueOrDefault("mgmt_initialTagCount", "0");
         var initialTagCount = int.Parse(initialTagCountStr);
 
         if (manifestDeleteAllowed && initialTagCount > 0)
         {
-            Assert.True(currentCount < initialTagCount,
-                $"Expected tag count to decrease after deletion. Was {initialTagCount}, now {currentCount}.");
+            Assert.True(
+                currentCount < initialTagCount,
+                $"Expected tag count to decrease after deletion. Was {initialTagCount}, now {currentCount}."
+            );
         }
     }
 
@@ -143,12 +160,15 @@ public class ContentManagementTests
 
         // Delete config blob
         var configResp = await _client.DeleteAsync($"/v2/{name}/blobs/{_data.Configs[3].Digest}");
-        Assert.Contains(configResp.StatusCode, new[]
-        {
-            HttpStatusCode.Accepted,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.MethodNotAllowed
-        });
+        Assert.Contains(
+            configResp.StatusCode,
+            new[]
+            {
+                HttpStatusCode.Accepted,
+                HttpStatusCode.NotFound,
+                HttpStatusCode.MethodNotAllowed,
+            }
+        );
 
         if (configResp.StatusCode == HttpStatusCode.MethodNotAllowed)
         {
@@ -157,12 +177,15 @@ public class ContentManagementTests
 
         // Delete layer blob
         var layerResp = await _client.DeleteAsync($"/v2/{name}/blobs/{_data.LayerBlobDigest}");
-        Assert.Contains(layerResp.StatusCode, new[]
-        {
-            HttpStatusCode.Accepted,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.MethodNotAllowed
-        });
+        Assert.Contains(
+            layerResp.StatusCode,
+            new[]
+            {
+                HttpStatusCode.Accepted,
+                HttpStatusCode.NotFound,
+                HttpStatusCode.MethodNotAllowed,
+            }
+        );
     }
 
     [Fact]

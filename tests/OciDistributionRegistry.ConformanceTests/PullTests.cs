@@ -6,7 +6,7 @@ using Xunit;
 namespace OciDistributionRegistry.ConformanceTests;
 
 [Collection("Conformance")]
-[TestCaseOrderer("OciDistributionRegistry.ConformanceTests.Helpers.AlphabeticalOrderer", "OciDistributionRegistry.ConformanceTests")]
+[TestCaseOrderer(typeof(AlphabeticalOrderer))]
 public class PullTests
 {
     private readonly RegistryFixture _fixture;
@@ -29,13 +29,23 @@ public class PullTests
         await TestData.PushBlobAsync(Client, Ns, Data.LayerBlobData, Data.LayerBlobDigest);
 
         // Push manifest[0] with tag
-        var resp0 = await TestData.PushManifestAsync(Client, Ns, "tagtest0",
-            Data.Manifests[0].Content, "application/vnd.oci.image.manifest.v1+json");
+        var resp0 = await TestData.PushManifestAsync(
+            Client,
+            Ns,
+            "tagtest0",
+            Data.Manifests[0].Content,
+            "application/vnd.oci.image.manifest.v1+json"
+        );
         resp0.EnsureSuccessStatusCode();
 
         // Push manifest[1] by digest
-        var resp1 = await TestData.PushManifestAsync(Client, Ns, Data.Manifests[1].Digest,
-            Data.Manifests[1].Content, "application/vnd.oci.image.manifest.v1+json");
+        var resp1 = await TestData.PushManifestAsync(
+            Client,
+            Ns,
+            Data.Manifests[1].Digest,
+            Data.Manifests[1].Content,
+            "application/vnd.oci.image.manifest.v1+json"
+        );
         resp1.EnsureSuccessStatusCode();
     }
 
@@ -52,7 +62,10 @@ public class PullTests
     [Fact]
     public async Task B1_HeadExistingBlob_Returns200()
     {
-        var request = new HttpRequestMessage(HttpMethod.Head, $"/v2/{Ns}/blobs/{Data.Configs[0].Digest}");
+        var request = new HttpRequestMessage(
+            HttpMethod.Head,
+            $"/v2/{Ns}/blobs/{Data.Configs[0].Digest}"
+        );
         var response = await Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -79,19 +92,25 @@ public class PullTests
     [Fact]
     public async Task C0_HeadNonexistentManifest_Returns404()
     {
-        var request = new HttpRequestMessage(HttpMethod.Head,
-            $"/v2/{Ns}/manifests/{Data.NonexistentManifest}");
+        var request = new HttpRequestMessage(
+            HttpMethod.Head,
+            $"/v2/{Ns}/manifests/{Data.NonexistentManifest}"
+        );
         var response = await Client.SendAsync(request);
         Assert.True(
-            response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.BadRequest,
-            $"Expected 404 or 400 but got {(int)response.StatusCode}");
+            response.StatusCode == HttpStatusCode.NotFound
+                || response.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400 but got {(int)response.StatusCode}"
+        );
     }
 
     [Fact]
     public async Task C1_HeadManifestByDigest_Returns200()
     {
-        var request = new HttpRequestMessage(HttpMethod.Head,
-            $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}");
+        var request = new HttpRequestMessage(
+            HttpMethod.Head,
+            $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}"
+        );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
         var response = await Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -103,8 +122,7 @@ public class PullTests
     [Fact]
     public async Task C2_HeadManifestByTag_Returns200()
     {
-        var request = new HttpRequestMessage(HttpMethod.Head,
-            $"/v2/{Ns}/manifests/tagtest0");
+        var request = new HttpRequestMessage(HttpMethod.Head, $"/v2/{Ns}/manifests/tagtest0");
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
         var response = await Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -118,15 +136,19 @@ public class PullTests
     {
         var response = await Client.GetAsync($"/v2/{Ns}/manifests/{Data.NonexistentManifest}");
         Assert.True(
-            response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.BadRequest,
-            $"Expected 404 or 400 but got {(int)response.StatusCode}");
+            response.StatusCode == HttpStatusCode.NotFound
+                || response.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400 but got {(int)response.StatusCode}"
+        );
     }
 
     [Fact]
     public async Task C4_GetManifestByDigest_Returns200()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get,
-            $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}");
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"/v2/{Ns}/manifests/{Data.Manifests[0].Digest}"
+        );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
         var response = await Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -135,8 +157,7 @@ public class PullTests
     [Fact]
     public async Task C5_GetManifestByTag_Returns200()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get,
-            $"/v2/{Ns}/manifests/tagtest0");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/v2/{Ns}/manifests/tagtest0");
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
         var response = await Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -147,15 +168,18 @@ public class PullTests
     [Fact]
     public async Task D0_GetInvalidDigestManifest_Returns400Or404WithErrorJson()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get,
-            $"/v2/{Ns}/manifests/sha256:totallywrong");
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"/v2/{Ns}/manifests/sha256:totallywrong"
+        );
         request.Headers.Add("Accept", "application/vnd.oci.image.manifest.v1+json");
         var response = await Client.SendAsync(request);
 
         Assert.True(
-            response.StatusCode == HttpStatusCode.BadRequest ||
-            response.StatusCode == HttpStatusCode.NotFound,
-            $"Expected 400 or 404 but got {(int)response.StatusCode}");
+            response.StatusCode == HttpStatusCode.BadRequest
+                || response.StatusCode == HttpStatusCode.NotFound,
+            $"Expected 400 or 404 but got {(int)response.StatusCode}"
+        );
 
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
