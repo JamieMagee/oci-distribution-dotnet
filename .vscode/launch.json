@@ -4,11 +4,11 @@
     {
       "name": "Launch OCI Registry",
       "type": "coreclr",
-      "request": "launch", 
+      "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/bin/Debug/net8.0/OciDistributionRegistry.dll",
+      "program": "${workspaceFolder}/src/OciDistributionRegistry/bin/Debug/net10.0/OciDistributionRegistry.dll",
       "args": [],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/src/OciDistributionRegistry",
       "console": "internalConsole",
       "stopAtEntry": false,
       "serverReadyAction": {
@@ -17,23 +17,6 @@
       },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "sourceFileMap": {
-        "/Views": "${workspaceFolder}/Views"
-      }
-    },
-    {
-      "name": "Launch OCI Registry (Production)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build",
-      "program": "${workspaceFolder}/bin/Debug/net8.0/OciDistributionRegistry.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "console": "internalConsole",
-      "stopAtEntry": false,
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
       }
     }
   ]

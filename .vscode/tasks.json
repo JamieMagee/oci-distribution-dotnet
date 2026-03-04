@@ -1,70 +1,32 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "build",
-			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"build",
-				"OciDistributionRegistry.csproj"
-			],
-			"group": "build",
-			"problemMatcher": [
-				"$msCompile"
-			]
-		},
-		{
-			"label": "run",
-			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"run",
-				"--project",
-				"OciDistributionRegistry.csproj"
-			],
-			"group": "build",
-			"problemMatcher": [
-				"$msCompile"
-			],
-			"dependsOn": "build"
-		},
-		{
-			"label": "test-api",
-			"type": "shell",
-			"command": "curl",
-			"args": [
-				"-v",
-				"http://localhost:5000/v2/"
-			],
-			"group": "test",
-			"problemMatcher": []
-		},
-		{
-			"label": "clean",
-			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"clean",
-				"OciDistributionRegistry.csproj"
-			],
-			"group": "build",
-			"problemMatcher": [
-				"$msCompile"
-			]
-		},
-		{
-			"label": "restore",
-			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"restore",
-				"OciDistributionRegistry.csproj"
-			],
-			"group": "build",
-			"problemMatcher": [
-				"$msCompile"
-			]
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["build", "distribution-dotnet.slnx"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "--project",
+        "tests/OciDistributionRegistry.ConformanceTests/OciDistributionRegistry.ConformanceTests.csproj"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"],
+      "dependsOn": "build"
+    }
+  ]
 }
