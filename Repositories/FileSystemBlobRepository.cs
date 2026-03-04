@@ -141,11 +141,12 @@ public class FileSystemBlobRepository : IBlobRepository
             }
         }
 
+        var startPosition = new FileInfo(session.Path).Exists ? new FileInfo(session.Path).Length : 0;
         using var fileStream = new FileStream(session.Path, FileMode.Append, FileAccess.Write);
         await stream.CopyToAsync(fileStream, cancellationToken);
         await fileStream.FlushAsync(cancellationToken);
 
-        var bytesWritten = stream.Length;
+        var bytesWritten = fileStream.Length - startPosition;
         session.Position += bytesWritten;
 
         _logger.LogDebug("Wrote {BytesWritten} bytes to upload session {SessionId}", bytesWritten, sessionId);
@@ -161,7 +162,7 @@ public class FileSystemBlobRepository : IBlobRepository
         try
         {
             // Write final chunk if provided
-            if (stream != null && stream.Length > 0)
+            if (stream != null)
             {
                 using var fileStream = new FileStream(session.Path, FileMode.Append, FileAccess.Write);
                 await stream.CopyToAsync(fileStream, cancellationToken);
@@ -180,7 +181,7 @@ public class FileSystemBlobRepository : IBlobRepository
             var directory = Path.GetDirectoryName(finalPath)!;
             Directory.CreateDirectory(directory);
             
-            File.Move(session.Path, finalPath);
+            File.Move(session.Path, finalPath, overwrite: true);
             _logger.LogInformation("Completed upload session {SessionId} for blob {Digest}", sessionId, digest);
         }
         catch

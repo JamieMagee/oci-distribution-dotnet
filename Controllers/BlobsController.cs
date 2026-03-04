@@ -47,14 +47,36 @@ public class BlobsController : DistributionBaseController
 
         Logger.LogDebug("Getting blob {Digest} from repository {Repository}", digest, name);
 
+        var size = await _blobRepository.GetSizeAsync(digest);
+
+        var rangeHeader = Request.Headers["Range"].ToString();
+        if (!string.IsNullOrEmpty(rangeHeader) && size.HasValue)
+        {
+            // Parse "bytes=start-end" per RFC 9110
+            var rangeSpec = rangeHeader.Replace("bytes=", "");
+            var parts = rangeSpec.Split('-');
+            var start = long.Parse(parts[0]);
+            var end = parts.Length > 1 && !string.IsNullOrEmpty(parts[1]) ? long.Parse(parts[1]) : size.Value - 1;
+
+            var rangeStream = await _blobRepository.GetRangeAsync(digest, start, end);
+            if (rangeStream == null)
+            {
+                return NotFound(CreateErrorResponse(OciErrorCodes.BlobUnknown, "Blob not found"));
+            }
+
+            AddDockerHeaders(digest);
+            Response.Headers.Add("Content-Range", $"bytes {start}-{end}/{size.Value}");
+            Response.Headers.Add("Content-Length", (end - start + 1).ToString());
+
+            return File(rangeStream, "application/octet-stream");
+        }
+
         var blobStream = await _blobRepository.GetAsync(digest);
         if (blobStream == null)
         {
             return NotFound(CreateErrorResponse(OciErrorCodes.BlobUnknown, "Blob not found"));
         }
 
-        var size = await _blobRepository.GetSizeAsync(digest);
-        
         AddDockerHeaders(digest);
         Response.Headers.Add("Content-Length", size.ToString());
         
@@ -179,6 +201,7 @@ public class BlobsController : DistributionBaseController
         AddDockerHeaders();
         Response.Headers.Add("Location", location);
         Response.Headers.Add("Range", "0-0");
+        Response.Headers.Add("OCI-Chunk-Min-Length", "0");
 
         return Accepted();
     }
@@ -204,18 +227,22 @@ public class BlobsController : DistributionBaseController
         var contentRange = Request.Headers["Content-Range"].ToString();
         var contentLength = Request.ContentLength ?? 0;
 
+        // For streamed (non-chunked) uploads, Content-Range may be absent.
+        // Treat as appending from the current position.
         if (string.IsNullOrEmpty(contentRange))
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.SizeInvalid, "Content-Range header required"));
+            contentRange = null;
         }
-
-        var rangeValidation = _validationService.ValidateContentRange(contentRange, contentLength);
-        if (!rangeValidation.IsValid)
+        else
         {
-            return BadRequest(CreateErrorResponse(OciErrorCodes.SizeInvalid, rangeValidation.ErrorMessage));
+            var rangeValidation = _validationService.ValidateContentRange(contentRange, contentLength);
+            if (!rangeValidation.IsValid)
+            {
+                return BadRequest(CreateErrorResponse(OciErrorCodes.SizeInvalid, rangeValidation.ErrorMessage));
+            }
         }
 
-        Logger.LogDebug("Uploading chunk for session {SessionId}, range {Range}", uuid, contentRange);
+        Logger.LogDebug("Uploading chunk for session {SessionId}, range {Range}", uuid, contentRange ?? "(streamed)");
 
         try
         {
@@ -321,6 +348,28 @@ public class BlobsController : DistributionBaseController
         Response.Headers.Add("Location", location);
         Response.Headers.Add("Range", $"{status.Value.Start}-{status.Value.End}");
 
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Cancel a blob upload session.
+    /// </summary>
+    /// <param name="name">Repository name</param>
+    /// <param name="uuid">Upload session ID</param>
+    /// <returns>No content on success</returns>
+    /// <response code="204">Upload session cancelled</response>
+    [HttpDelete("uploads/{uuid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> CancelUpload(string name, string uuid)
+    {
+        var repoValidation = ValidateRepositoryName(name);
+        if (repoValidation != null) return repoValidation;
+
+        Logger.LogInformation("Cancelling upload session {SessionId} for repository {Repository}", uuid, name);
+
+        await _blobRepository.CancelUploadAsync(uuid);
+
+        AddDockerHeaders();
         return NoContent();
     }
 
