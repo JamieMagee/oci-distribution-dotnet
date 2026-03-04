@@ -1,0 +1,26 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@90d377eb1156f8c938774b2cdfd5707f7a0177eb # v4.2.2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@16f8d02f6a487de9e26bb5758ca844357dbfdb9d # v4.3.1
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release
