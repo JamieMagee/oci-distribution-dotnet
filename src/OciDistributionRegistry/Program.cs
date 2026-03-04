@@ -15,6 +15,12 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+// Remove default request body size limit for blob uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = null;
+});
+
 // Add services to the container
 builder
     .Services.AddControllers()
