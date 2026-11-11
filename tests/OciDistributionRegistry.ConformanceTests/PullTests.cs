@@ -6,7 +6,7 @@ using Xunit;
 namespace OciDistributionRegistry.ConformanceTests;
 
 [Collection("Conformance")]
-[TestCaseOrderer(typeof(AlphabeticalOrderer))]
+[TestMethodOrderer(typeof(AlphabeticalOrderer))]
 public class PullTests
 {
     private readonly RegistryFixture _fixture;
