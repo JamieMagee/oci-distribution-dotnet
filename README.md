@@ -6,7 +6,7 @@ It stores blobs and manifests on the local filesystem, supports chunked uploads,
 
 ## Requirements
 
-- .NET 10 SDK or later
+- .NET 11 SDK or later
 
 ## Running it
 
