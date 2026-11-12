@@ -10,7 +10,7 @@ namespace OciDistributionRegistry.ConformanceTests;
 /// Tests content management (delete) operations for manifests and blobs.
 /// </summary>
 [Collection("Conformance")]
-[TestCaseOrderer(typeof(AlphabeticalOrderer))]
+[TestMethodOrderer(typeof(AlphabeticalOrderer))]
 public class ContentManagementTests
 {
     private readonly RegistryFixture _fixture;
